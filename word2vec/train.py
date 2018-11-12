@@ -13,7 +13,7 @@ import jieba
 import numpy as np
 from six.moves import xrange
 import tensorflow as tf
-
+import os
 # -*- coding: utf-8 -*-
 import re
 
@@ -38,6 +38,7 @@ def read_data():
 
     # 读取文本，预处理，分词，得到词典
     raw_word_list = []
+    '''
     with open(sourceText,"r") as f:#filter
         line = re.sub("[A-Za-z0-9]", "", f.readline())
         while line:#filter
@@ -49,11 +50,30 @@ def read_data():
                 raw_words = list(jieba.cut(line,cut_all=False))
                 raw_filterStopword = []
                 for w in raw_words:
-                    if w not in stop_words:
+                    if w not in stop_words and len(w)>1:
                         raw_word_list.append(w)
                 #raw_word_list.extend(raw_words)
             line = re.sub("[A-Za-z0-9]", "", f.readline())
+    '''
+    path = './TextForTrain'
 
+    for filename in os.listdir(path):
+        print(len(raw_word_list),'loading:',path+'/./'+filename)
+        with open(path+'/'+filename,"r") as f:#filter
+            line = re.sub("[A-Za-z0-9]", "", f.readline())
+            while line:#filter
+                while '\n' in line:
+                    line = line.replace('\n','')
+                while ' ' in line:
+                    line = line.replace(' ','')
+                if len(line)>0: # 如果句子非空
+                    raw_words = list(jieba.cut(line,cut_all=False))
+                    raw_filterStopword = []
+                    for w in raw_words:
+                        if w not in stop_words and len(w)>1:
+                            raw_word_list.append(w)
+                    #raw_word_list.extend(raw_words)
+                line = re.sub("[A-Za-z0-9]", "", f.readline())
     return raw_word_list
 
 #step 1:读取文件中的内容组成一个列表
@@ -61,7 +81,7 @@ words = read_data()
 print('Data size', len(words))
 
 # Step 2: Build the dictionary and replace rare words with UNKNOWWORD token.
-use_value = 0.9 #max is 1
+use_value = 0.7 #max is 1
 vocabulary_size = int(len(collections.Counter(words))*use_value) #55000
 print("count of dict:",len(collections.Counter(words)),"use :",vocabulary_size)
 def build_dataset(words):
@@ -74,7 +94,10 @@ def build_dataset(words):
     data = list()
     unknowword_count = 0
     for word in words:
-        if word in dictionary:
+        if word.isdigit():
+            index = 0
+            unknowword_count += 1
+        elif word in dictionary:
             index = dictionary[word]
         else:
             index = 0
@@ -88,7 +111,7 @@ def build_dataset(words):
 data, count, dictionary, reverse_dictionary = build_dataset(words)
 #删除words节省内存
 del words
-print('Most common words (+UNKNOWWORD)', count[:5])
+#print('Most common words (+UNKNOWWORD)', count[:5])
 ''' print count and word
 for i in count[1:20]:
     row=":"
@@ -159,7 +182,7 @@ def show_detail(T_name,T,detail=0):
 # Step 4: Build and train a skip-gram model.
 batch_size = 128
 embedding_size = 128
-skip_window = 32   # 2*skip_window >= num_skips
+skip_window = 32    # 2*skip_window >= num_skips
 num_skips = 2       # = batch_size/n
 valid_size = 10
 num_sampled = 64    # Number of negative examples to sample.
@@ -179,46 +202,55 @@ starttime = datetime.datetime.now()
 #E_point = random.randint(valid_size,len(reverse_dictionary))
 
 valid_word=[]
-topic_train=''
+valid_word = ['經濟','安全','污染','技術','恐懼']
+valid_size = len(valid_word)
+'''
+print(E_point-valid_size,E_point)
+
 for i in xrange(E_point-valid_size,E_point):
     valid_word.append(reverse_dictionary[i].encode('utf-8'))
-    topic_train+=reverse_dictionary[i].encode('utf-8')
-    topic_train+=' | '
-
+'''
 #show_detail("valid_word",valid_word)
-
+print('valid_word')
+print(valid_word)
 valid_examples =[dictionary[li.decode('utf-8')] for li in valid_word]
 
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
-    train_inputs = tf.placeholder(tf.int32, shape=[batch_size])
-    train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1])
+    train_inputs = tf.placeholder(tf.int32, shape=[batch_size],name='train_inputs')
+    train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1],name='train_labels')
     valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
 
     # Ops and variables pinned to the CPU because of missing GPU implementation
     with tf.device('/cpu:0'):
         # Look up embeddings for inputs.
-        embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
-        embed = tf.nn.embedding_lookup(embeddings, train_inputs)
+        with tf.name_scope('Embeddings'):
+            embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0),name='Embeddings')
+            embed = tf.nn.embedding_lookup(embeddings, train_inputs)
+            tf.summary.histogram(name ='Embeddings', values = embeddings)
 
         # Construct the variables for the NCE loss
         with tf.name_scope('Weights'):
-            nce_weights = tf.Variable(tf.truncated_normal([vocabulary_size, embedding_size],stddev=1.0 / math.sqrt(embedding_size)))
+            nce_weights = tf.Variable(tf.truncated_normal([vocabulary_size, embedding_size],stddev=1.0 / math.sqrt(embedding_size)),name='Weights')
+            tf.summary.histogram(name ='Weights', values = nce_weights)
         with tf.name_scope('Biases'):
-            nce_biases = tf.Variable(tf.zeros([vocabulary_size]),dtype=tf.float32)
+            nce_biases = tf.Variable(tf.zeros([vocabulary_size]),dtype=tf.float32,name='Biases')
+            tf.summary.histogram(name ='Biases', values = nce_biases)
 
     # Compute the average NCE loss for the batch.
     # tf.nce_loss automatically draws a new sample of the negative labels each
     # time we evaluate the loss.
-    with tf.name_scope('loss'):
+    with tf.name_scope('Loss'):
         output_layer = tf.nn.nce_loss(weights=nce_weights,biases=nce_biases,inputs=embed,labels=train_labels,num_sampled=num_sampled,num_classes=vocabulary_size)
         loss = tf.reduce_mean(output_layer)
         tf.summary.scalar('loss', loss)
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Train'):
         optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        train_step = [optimizer, loss]
+        merged = tf.summary.merge_all()
+        #train_set = [optimizer, loss]
+        train_set = [optimizer, merged]
     # Compute the cosine similarity between minibatch examples and all embeddings.
     norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=True))
     normalized_embeddings = embeddings / norm
@@ -226,33 +258,56 @@ with graph.as_default():
     similarity = tf.nn.softmax(tf.matmul(valid_embeddings, normalized_embeddings, transpose_b=True))
 
     # Add variable initializer.
+
     init = tf.global_variables_initializer()
 
 
-
+def writeLog(name,text):
+    f = open("./NearestWord/"+name.encode('utf-8')+".txt","aw+")
+    f.write(text.encode('utf-8'))
+    f.write('\n')
+    f.close()
 # Step 5-ex: Begin training.
-#train_step = [optimizer, loss]
+#train_set = [optimizer, loss]
 sess = tf.Session(graph=graph)
 # 將視覺化輸出
 #writer = tf.summary.FileWriter("TensorBoard/", graph = sess.graph)#TensorBoard
+
 writer = tf.summary.FileWriter("TB/", graph = sess.graph)#TensorBoard
 sess.run(init)
 
-num_turn =10
-num_steps = num_turn*100
+num_turn =100
+num_steps = num_turn*1000
 average_loss = 0
 average_loss_num_step = num_steps/10
 averagelossline_record=[]
 for step in xrange(num_steps):
-    #sess.run(train_step, feed_dict={xs: batch_xs, ys: batch_ys, keep_prob: 0.5})
+    #sess.run(train_set, feed_dict={xs: batch_xs, ys: batch_ys, keep_prob: 0.5})
     batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
     #show_detail("batch_inputs",batch_inputs)#Qusetion 128*1
     #show_detail("batch_labels",batch_labels)#Answer 128*1
 
     feed_dict = {train_inputs: batch_inputs, train_labels: batch_labels}
-    _, loss_val = sess.run(train_step, feed_dict=feed_dict)
-    average_loss += loss_val
+    _, loss_val = sess.run(train_set, feed_dict=feed_dict)
+    writer.add_summary(loss_val, step)
+    if step % average_loss_num_step == 0:
+        print(step)
+        sim = similarity.eval(session=sess) # valid examples len * text dict len
 
+        for i in xrange(valid_size):
+            valid_word = reverse_dictionary[valid_examples[i]]
+            top_k = 20  # number of nearest neighbors
+            nearest = (-sim[i, :]).argsort()[:top_k]
+            log_str = "Nearest to %s:" % valid_word
+            for k in xrange(top_k):
+                close_word = reverse_dictionary[nearest[k]]
+                log_str = "%s %s," % (log_str, close_word)
+                writeLog(valid_word,close_word)
+            print(log_str)
+            print("\n")
+            writeLog(valid_word,'--------')
+    '''
+    average_loss += int(loss_val)
     if step % average_loss_num_step == 0:
         if step > 0:
             average_loss /= average_loss_num_step
@@ -263,6 +318,7 @@ for step in xrange(num_steps):
 
         # Note that this is expensive (~20% slowdown if computed every 500 steps)
         if step % 10000 == 0:
+
             sim = similarity.eval(session=sess)
             for i in xrange(valid_size):
                 valid_word = reverse_dictionary[valid_examples[i]]
@@ -273,9 +329,12 @@ for step in xrange(num_steps):
                     close_word = reverse_dictionary[nearest[k]]
                     log_str = "%s %s," % (log_str, close_word)
                 print(log_str)
+
+
+    '''
     final_embeddings = normalized_embeddings.eval(session=sess)
 
-
+sess.close()
 print("training closed")
 
 # Step 6: Visualize the embeddings.
@@ -304,8 +363,10 @@ def result_Json(final_embeddings,dictionary,filename='images/tsne3.png'):
     show_detail("low_dim_embs",low_dim_embs)
     show_detail("dictionary",dictionary)
     re_list={}
-    for i in range(len(dictionary)):
+    lenDoct = len(dictionary)
+    for i in range(lenDoct):
         #fetch = {dictionary[i]:low_dim_embs[i]}
+        print('result_Json step:',i,'/',lenDoct)
         re_list[dictionary[i].encode('utf-8')] = low_dim_embs[i].tolist()
     show_detail("re_list",re_list)
     f = open(outputText,'wa')
@@ -341,7 +402,7 @@ try:
     #show_detail("final_embeddings",final_embeddings)
     #show_detail("final_embeddings[0]",final_embeddings[0])
     final_embeddings_batch = final_embeddings[:plot_only, :]
-    #result_Json(final_embeddings,reverse_dictionary)
+    result_Json(final_embeddings,reverse_dictionary)
 
     low_dim_embs = tsne.fit_transform(final_embeddings_batch)
     #show_detail("low_dim_embs",low_dim_embs)

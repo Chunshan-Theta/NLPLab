@@ -1,0 +1,12 @@
+ 我們最熟悉的積木品牌，LEGO，是由丹麥木匠Ole Christiansen在1934年所創立，其積木設計的理念是為了提供一套系統化的玩具。隨著產品的發展，從引入Lego Technic機械組件，到現在的智能積木，透過玩家的巧思，讓原本的積木搭配處理器、發動機、感測與軟體編譯器等元件，賽車、機器人、飛機都能動起來，也讓許多科學與工程實驗，都能透過這種活動來進行教學。
+
+而最近荷蘭的設計師Dave Hakkens，提出一種手機模組化的新概念『Phonebloks』，就像是我們熟知的樂高積木，讓使用者DIY組裝想像中的手機。舉凡藍芽、Wi-Fi、電池、相機、喇叭等元件都可以像積木一樣簡單地拼湊拆解。以往電子產品常因部件損壞被淘汰，進而製造大量的電子垃圾，但在這樣巧思設計下，使用者可以任意替換損壞或升級元件，達成節省與環保目的。日前手機廠商Motorola宣布將與Dave合作，使用3D列印技術，讓每個人擁有客製化的「積木手機」。
+
+從無生命的小積木到各式科技積木的推陳出新，無不為人類生活所需。模組化的概念就是這些拆解的小積木，利用異中求同，抽取相同的軟硬體元件來重複組裝再使用，以達成節約的最大效益。未來，我們將樂見更多科技積木的誕生！
+
+參考資料
+http://en.wikipedia.org/wiki/Lego
+http://www.twwiki.com/樂高積木
+https://phonebloks.com/
+http://www.dailymail.co.uk/sciencetech/article-2515747/Motorola-start-3D-printing-modular-mobiles-customers-like-Lego.html
+

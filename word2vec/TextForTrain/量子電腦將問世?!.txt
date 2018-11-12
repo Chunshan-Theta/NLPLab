@@ -1,0 +1,13 @@
+ 量子計算機的理論是在八十年代變得豐富起來的。1982年理查費曼（Richard Feynman）提出，利用量子系統來實現通用計算設備的概念，接著1985年，大衛杜其（David Deutsch）提出了量子圖林機（Quantum machine）的模型。一般我們所熟知的傳統電腦，是利用電位高低表示0或1，但量子電腦則利用原子的能階代表訊息，以量子位元（qubits）來儲存數據，使用量子演算法來操作計算，其計算本質為疊加性與相干性，將可執行量子平行化處理，因此，這樣強大的運算能力將遠遠超越一般電腦。
+
+在2007年, 加拿大的D-Wave公司研發出全球首台量子計算機，但當時其穩定度不夠，僅能運算數千次。於四年後，發布了號稱第一款商用型量子電腦的計算設備「D-Wave One」，不過尚未廣泛地得到應用。而經過科學家努力不斷地嘗試與實驗，IBM於年初宣布於量子運算領域獲得重大突破，已創造出執行量子運算技術的工作元件，接著將創造系統，希望量子電腦可於十五年內問世。另外，近期也有研究團隊爭相發表相關論文於Science，分別利用超純矽與鑽石晶體來儲存量子資訊。隨著量子資訊研究的持續發展，相信量子電腦的應用將是指日可待，而原本仰賴超級電腦的龐大複雜運算，也許屆時將由數年的計算時間降為幾分鐘的量子世界。
+
+參考資料
+量子電腦，中文维基百科，http://zh.wikipedia.org/wiki/量子计算机
+工商時報, http://www.cm.nctu.edu.tw/news/news.php?Sn=4671
+D-Wave http://www.dwavesys.com/en/products-services.html
+聯合新聞網, http://mag.udn.com/mag/digital/storypage.jsp?f_ART_ID=374540
+中央社, http://goo.gl/Wg47V
+Science, http://www.sciencemag.org/content/336/6086/1280.full.pdf?sid=b14010fe-b689-4128-8ead-fd5fbc4751ad
+Science http://www.sciencedaily.com/releases/2012/04/120404161943.htm
+

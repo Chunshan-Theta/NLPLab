@@ -1,0 +1,13 @@
+ 不久前，全球最大的非營利反垃圾郵件組織Spamhus遭受到代號『Operation Stophaus』的大規模網路攻擊，該波網路攻擊的最大流量高達300Gbps，除了導致Spamhus的網路服務中斷超過一個禮拜外，甚至也嚴重影響到全球用戶的網路使用。在Prolexic的數位鑑識報告中指出，『Operation Stophaus』的攻擊有92%是透過DNS（Domain Server）伺服器所進行的反射攻擊（DNS Attack）。攻擊者使用Spamhus伺服器的網路位址（Internet Protocol）來偽造網域名稱查詢需求，並同時傳送給上千臺DNS伺服器進行遞迴查詢（Recursive query）。透過遞迴查詢，原本的攻擊流量迅速地增強數倍並透過合法的DNS伺服器傳送給Spamhus的伺服器，在短時間內造成系統過載，進而中斷Spamhus的外部服務。
+
+在這個案例中，攻擊者就是使用DNS反射式攻擊來進行分散式阻斷服務攻擊（Distributed DDoS）。攻擊者對目標主機發動密集且來源分散的網路存取行為，來達到消耗目標主機網路頻寬以及運算資源的目的，藉此降低目標主機的對外服務品質，甚至導致服務中斷。
+
+這樣的攻擊手法大大降低了DDoS攻擊的啟動門檻。以往攻擊者想要發動大規模DDoS攻擊，都必需要指揮全球各地超過百萬臺的電腦主機組成的殭屍網路（Botnet），同時對目標進行密集的網路存取動作；但是，透過DNS反射式攻擊，攻擊者只需要使用一臺電腦主機就可以利用全球超過百萬臺開啟遞迴查詢的DNS伺服器（Open Resolver）來作為攻擊流量的增幅器（Amplifier），就可以在短時間內創造超過100 Gbps的攻擊流量。
+
+這種新型態的攻擊手法雖然難以防禦，但還是有方法可以降低其成功的機率。只要單位內的DNS伺服器能夠被正確地設定，關閉預設的遞迴查詢功能，並僅開放DNS查詢服務給予經過授權的客戶端使用。如此一來，DNS伺服器就不會遭到有心人士的利用，成為另一波DDoS網路攻擊的幕後幫凶，同時也可以為網路安全盡一己之力。
+
+參考資料
+World's http://thehackernews.com/2013/03/worlds-biggest-ddos-attack-that-almost.html
+Massive http://thehackernews.com/2013/05/massive-167gbps-ddos-attacks-against.html
+Who http://thehackernews.com/2013/04/who-needs-botnet-when-you-have-4-gbps.html
+
