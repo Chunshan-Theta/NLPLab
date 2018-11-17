@@ -58,7 +58,7 @@ def read_data():
     path = './TextForTrain'
 
     for filename in os.listdir(path):
-        print(len(raw_word_list),'loading:',path+'/./'+filename)
+        print(len(raw_word_list),'loading:',path+'/'+filename)
         with open(path+'/'+filename,"r") as f:#filter
             line = re.sub("[A-Za-z0-9]", "", f.readline())
             while line:#filter
@@ -70,7 +70,7 @@ def read_data():
                     raw_words = list(jieba.cut(line,cut_all=False))
                     raw_filterStopword = []
                     for w in raw_words:
-                        if w not in stop_words and len(w)>1:
+                        if w not in stop_words:
                             raw_word_list.append(w)
                     #raw_word_list.extend(raw_words)
                 line = re.sub("[A-Za-z0-9]", "", f.readline())
@@ -94,7 +94,7 @@ def build_dataset(words):
     data = list()
     unknowword_count = 0
     for word in words:
-        if word.isdigit():
+        if word.isdigit() or len(word)<2:
             index = 0
             unknowword_count += 1
         elif word in dictionary:
@@ -187,6 +187,9 @@ num_skips = 2       # = batch_size/n
 valid_size = 10
 num_sampled = 64    # Number of negative examples to sample.
 
+assert batch_size%num_skips==0
+assert 2*skip_window >= num_skips
+
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import datetime
@@ -202,7 +205,7 @@ starttime = datetime.datetime.now()
 #E_point = random.randint(valid_size,len(reverse_dictionary))
 
 valid_word=[]
-valid_word = ['經濟','安全','污染','技術','恐懼']
+valid_word = ["民眾","政府","企業","專家","環境"]
 valid_size = len(valid_word)
 '''
 print(E_point-valid_size,E_point)
@@ -402,7 +405,7 @@ try:
     #show_detail("final_embeddings",final_embeddings)
     #show_detail("final_embeddings[0]",final_embeddings[0])
     final_embeddings_batch = final_embeddings[:plot_only, :]
-    result_Json(final_embeddings,reverse_dictionary)
+    #result_Json(final_embeddings,reverse_dictionary)
 
     low_dim_embs = tsne.fit_transform(final_embeddings_batch)
     #show_detail("low_dim_embs",low_dim_embs)

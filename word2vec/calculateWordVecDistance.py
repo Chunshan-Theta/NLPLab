@@ -2,7 +2,7 @@
 #!usr/bin/env python
 import json
 
-Json_file = open("./output(10day).txt","r")
+Json_file = open("./output.txt","r")
 Json_file = json.load(Json_file)
 '''
 print(d)
