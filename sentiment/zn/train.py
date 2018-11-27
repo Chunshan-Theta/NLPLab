@@ -187,15 +187,18 @@ numDimensions = 2
 
 positiveFilesCount = 5251
 negativeFilesCount = 4764
+testingFilesCount = 1000
+
 def getTrainBatch():
+    testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
         if (i % 2 == 0):#positive
-            num = randint(1,positiveFilesCount-500)
+            num = randint(1,positiveFilesCount-testRange)
             labels.append([1,0])
         else:#negative
-            num = randint(positiveFilesCount+500,positiveFilesCount+negativeFilesCount-1)
+            num = randint(positiveFilesCount+testRange,positiveFilesCount+negativeFilesCount-1)
             labels.append([0,1])
 
         arr[i] = ids[num-1:num]
@@ -203,10 +206,11 @@ def getTrainBatch():
     return arr, labels
 
 def getTestBatch():
+    testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
-        num = randint(positiveFilesCount-500,positiveFilesCount+500)
+        num = randint(positiveFilesCount-testRange,positiveFilesCount+testRange)
         if (num <= positiveFilesCount):
             labels.append([1,0])
         else:
@@ -250,7 +254,7 @@ logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/
 writer = tf.summary.FileWriter(logdir, sess.graph)
 
 
-
+'''
 #Step4.0: inital config of training
 sess = tf.InteractiveSession()
 saver = tf.train.Saver()
@@ -278,6 +282,7 @@ for i in range(iterations):
 
 writer.close()
 '''
+
 #Step5.0: loading model
 
 sess = tf.InteractiveSession()
@@ -285,11 +290,55 @@ saver = tf.train.Saver()
 saver.restore(sess, tf.train.latest_checkpoint('models'))
 
 
-
+'''
 #Step5.1: testing the model
-
 iterations = 10
 for i in range(iterations):
     nextBatch, nextBatchLabels = getTestBatch();
     print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
 '''
+
+
+
+#Step5.2: testing the model by string
+def testingSpeech(source):
+    source = source.replace(" ", "") #remove space
+    source = re.sub("[A-Za-z0-9]+", "", source) # remove English and number
+    source = re.sub("[/.~?=,]+", "", source) # remove Any character symbols
+    source_list = jieba.lcut(source)
+    Sentence = np.zeros((maxSeqLength), dtype='int32')
+    idx = 0
+    for i in source_list:
+        try:
+            if len(i)<=1:
+                Sentence[idx] =finWord-1
+            else:
+                Sentence[idx] = wordsList.index(unicode(i,"utf-8"))
+        except:
+            Sentence[idx] =finWord-1
+        idx+=1
+        if idx>=maxSeqLength:
+            break
+
+    input_data_Sentence = np.zeros((24,35))
+    input_data_Sentence[0] = Sentence
+    prediction_answer = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
+    prediction_answer = prediction_answer[0]
+    print(source)
+    if prediction_answer[0]>prediction_answer[1]:
+        print("good",prediction_answer[0]-prediction_answer[1])
+    else:
+        print("bad",prediction_answer[1]-prediction_answer[0])
+    print("-"*10)
+
+testingSpeech("[其他]  也有人們相對會提出：建造核廠的資金非常龐大，難道全都要由人民的血汗錢支出？說實在的，建造核廠所需的錢確實很多，但各位是否思考過，用火力發電，要燃燒石油煤碳與天然氣，現在的石油在數十年後就面臨枯竭的危機，那時購買原料的價錢就會變貴，因此，何不直接停止石化原料燃燒發電的方法，用費用較便宜的鈾料產生電力就好了呢？")
+testingSpeech("[提出疑問]  是阿~這就是剛才貼的東西寫的")
+testingSpeech("[其他]  看她漂亮啊")
+testingSpeech("[提出疑問]  你能不能舉例說明")
+testingSpeech("[提出疑問]  嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨")
+testingSpeech("[提出疑問]  你能不能舉例說明關於核能對於環境破壞的可能性")
+testingSpeech("[提出疑問]  你能不能舉例說明關於國營企業 核能對於環境破壞的可能性")
+testingSpeech("[其他]  嗨")
+testingSpeech("[提出論點或證據]  不過基本上 這樣國營企業要倒掉民營化是很難的")
+testingSpeech("[其他]  你好友善 我旁邊感覺快吵起來惹哈哈哈")
+testingSpeech("[表達同意或支持]  我應該是同意吧")
