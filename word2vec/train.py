@@ -81,7 +81,7 @@ words = read_data()
 print('Data size', len(words))
 
 # Step 2: Build the dictionary and replace rare words with UNKNOWWORD token.
-use_value = 0.7 #max is 1
+use_value = 0.9 #max is 1
 vocabulary_size = int(len(collections.Counter(words))*use_value) #55000
 print("count of dict:",len(collections.Counter(words)),"use :",vocabulary_size)
 def build_dataset(words):
@@ -94,7 +94,8 @@ def build_dataset(words):
     data = list()
     unknowword_count = 0
     for word in words:
-        if word.isdigit() or len(word)<2:
+        #if word.isdigit() or len(word)<2: #ignore the word that length is one or just combine with digit.
+        if word.isdigit(): #ignore the word that just combine with digit.
             index = 0
             unknowword_count += 1
         elif word in dictionary:
@@ -182,8 +183,8 @@ def show_detail(T_name,T,detail=0):
 # Step 4: Build and train a skip-gram model.
 batch_size = 128
 embedding_size = 128
-skip_window = 32    # 2*skip_window >= num_skips
-num_skips = 2       # = batch_size/n
+skip_window = 64    # 2*skip_window >= num_skips
+num_skips = 32       # = batch_size/n
 valid_size = 10
 num_sampled = 64    # Number of negative examples to sample.
 
@@ -205,7 +206,10 @@ starttime = datetime.datetime.now()
 #E_point = random.randint(valid_size,len(reverse_dictionary))
 
 valid_word=[]
-valid_word = ["民眾","政府","企業","專家","環境"]
+valid_word = ["貢獻","助於","錯誤","損失","遺憾"]
+
+
+
 valid_size = len(valid_word)
 '''
 print(E_point-valid_size,E_point)
@@ -216,8 +220,8 @@ for i in xrange(E_point-valid_size,E_point):
 #show_detail("valid_word",valid_word)
 print('valid_word')
 print(valid_word)
-valid_examples =[dictionary[li.decode('utf-8')] for li in valid_word]
 
+valid_examples =[dictionary[li.decode('utf-8')] for li in valid_word]
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
@@ -293,13 +297,14 @@ for step in xrange(num_steps):
     feed_dict = {train_inputs: batch_inputs, train_labels: batch_labels}
     _, loss_val = sess.run(train_set, feed_dict=feed_dict)
     writer.add_summary(loss_val, step)
+    print(str(step)+" step")
     if step % average_loss_num_step == 0:
-        print(step)
+
         sim = similarity.eval(session=sess) # valid examples len * text dict len
 
         for i in xrange(valid_size):
             valid_word = reverse_dictionary[valid_examples[i]]
-            top_k = 20  # number of nearest neighbors
+            top_k = 50  # number of nearest neighbors
             nearest = (-sim[i, :]).argsort()[:top_k]
             log_str = "Nearest to %s:" % valid_word
             for k in xrange(top_k):
@@ -357,10 +362,10 @@ def plot_with_labels(low_dim_embs, labels, filename='images/tsne3.png',fonts=Non
                     va='bottom')
     plt.savefig(filename,dpi=800)
 
-outputText = "outputWord2Vec.txt"
+outputText = "./output/outputWord2Vec(v300).txt"
 def result_Json(final_embeddings,dictionary,filename='images/tsne3.png'):
 
-    tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+    tsne = TSNE(perplexity=30, n_components=300, init='pca', n_iter=5000)
 
     low_dim_embs = tsne.fit_transform(final_embeddings)
     show_detail("low_dim_embs",low_dim_embs)
@@ -405,7 +410,7 @@ try:
     #show_detail("final_embeddings",final_embeddings)
     #show_detail("final_embeddings[0]",final_embeddings[0])
     final_embeddings_batch = final_embeddings[:plot_only, :]
-    #result_Json(final_embeddings,reverse_dictionary)
+    result_Json(final_embeddings,reverse_dictionary)
 
     low_dim_embs = tsne.fit_transform(final_embeddings_batch)
     #show_detail("low_dim_embs",low_dim_embs)
