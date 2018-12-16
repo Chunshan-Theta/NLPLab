@@ -89,4 +89,4 @@ for rootUrlIdx in range(len(urlSet)):
                 break
 
 
-#driver.close()
+driver.close()
