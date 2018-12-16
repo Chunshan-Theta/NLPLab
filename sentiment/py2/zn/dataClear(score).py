@@ -33,7 +33,7 @@ db  =  MySQLdb.connect (
 cur  =  db.cursor()
 cur.execute('SET NAMES UTF8')
 #執行的都是原生SQL語句
-cur.execute( "SELECT `action_id`,`content`,`sayType` FROM `action_list` WHERE `sayType`!= 0" )
+cur.execute( "SELECT `action_id`,`content` FROM `action_list`" )
 
 for  row  in  cur.fetchall():
     logging.debug(row[1])
