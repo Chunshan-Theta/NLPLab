@@ -56,7 +56,6 @@ logging.debug("資料 vec: "+str(wordVectors[wordsList.index("資料")]))
 
 '''
 #Step 2.01: Example for build embeddings structure of the sentence.
-
 #现在我们有了向量，我们的第一步就是输入一个句子，然后构造它的向量表示。假设我们现在的输入句子是 “I thought the movie was incredible and inspiring”。为了得到词向量，我们可以使用 TensorFlow 的嵌入函数。这个函数有两个参数，一个是嵌入矩阵（在我们的情况下是词向量矩阵），另一个是每个词对应的索引。接下来，让我们通过一个具体的例子来说明一下。
 
 
@@ -81,8 +80,7 @@ with tf.Session() as sess:
     print(tf.nn.embedding_lookup(wordVectors,firstSentence).eval().shape)
 '''
 
-
-
+#step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 '''
 #Step 2.1: build embeddings structure of the sentence.
 #Could skip this step if the result was got.
@@ -108,9 +106,9 @@ for nf in negativeFiles:
 logging.info('Negative files finished')
 
 numFiles = len(numWords)
-logging.info('The total number of files is', numFiles)
-logging.info('The total number of words in the files is', sum(numWords))
-logging.info('The average number of words in the files is', sum(numWords)/len(numWords))
+logging.info('The total number of files is '+str(numFiles))
+logging.info('The total number of words in the files is '+str(sum(numWords)))
+logging.info('The average number of words in the files is '+str(sum(numWords)/len(numWords)))
 maxSeqLength = 35
 
 
@@ -135,11 +133,9 @@ for pf in positiveFiles:
        split = cleanSentences(line)
        for word in split:
            try:
-               if len(word)<=1:
-                   ids[fileCounter][indexCounter] = finWord-1 #ignore mean-less words
-               else:
-                   logging.info(word)
-                   ids[fileCounter][indexCounter] = wordsList.index(word)
+
+               logging.debug(word)
+               ids[fileCounter][indexCounter] = wordsList.index(word)
            except ValueError:
                ids[fileCounter][indexCounter] = finWord-1 #Vector for unkown words
            indexCounter = indexCounter + 1
@@ -168,8 +164,8 @@ for nf in negativeFiles:
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
 
-
 '''
+
 
 
 #Step3.1: loading sample
@@ -181,13 +177,13 @@ ids = np.load('idsMatrix.npy')
 batchSize = 24
 lstmUnits = 64
 numClasses = 2
-iterations = 100000
+iterations = 300000 * 8   #300000 = 1 hr
 maxSeqLength = 35
 numDimensions = 2
 
-positiveFilesCount = 5251
-negativeFilesCount = 4764
-testingFilesCount = 1000
+positiveFilesCount = len(listdir('positiveReviews/'))#5251
+negativeFilesCount = len(listdir('negativeReviews/'))#4764
+testingFilesCount = int((positiveFilesCount+negativeFilesCount)*0.1)#1000
 
 def getTrainBatch():
     testRange = testingFilesCount/2
@@ -195,12 +191,12 @@ def getTrainBatch():
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
         if (i % 2 == 0):#positive
-            num = randint(1,positiveFilesCount-testRange)
+            num = randint(1,int(positiveFilesCount-testRange))
             labels.append([1,0])
         else:#negative
-            num = randint(positiveFilesCount+testRange,positiveFilesCount+negativeFilesCount-1)
+            num = randint(int(positiveFilesCount+testRange),int(positiveFilesCount+negativeFilesCount-1))
             labels.append([0,1])
-
+        logging.debug(str(num))
         arr[i] = ids[num-1:num]
 
     return arr, labels
@@ -210,7 +206,7 @@ def getTestBatch():
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
-        num = randint(positiveFilesCount-testRange,positiveFilesCount+testRange)
+        num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
         if (num <= positiveFilesCount):
             labels.append([1,0])
         else:
@@ -219,42 +215,62 @@ def getTestBatch():
     return arr, labels
 
 
-sess = tf.Session()
+
 tf.reset_default_graph()
 
-labels = tf.placeholder(tf.float32, [batchSize, numClasses])
-input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
 
-data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]),dtype=tf.float32)
-data = tf.nn.embedding_lookup(wordVectors,input_data)
 
-lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
-lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
-data = tf.cast(data,tf.float32)
-value, _ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
 
-weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]))
-bias = tf.Variable(tf.constant(0.1, shape=[numClasses]))
-value = tf.transpose(value, [1, 0, 2])
-last = tf.gather(value, int(value.get_shape()[0]) - 1)
-prediction = (tf.matmul(last, weight) + bias)
+with tf.name_scope('Embeddings'):
+    labels = tf.placeholder(tf.float32, [batchSize, numClasses])
+    input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
 
-correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
-accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+    data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]),dtype=tf.float32)
+    data = tf.nn.embedding_lookup(wordVectors,input_data)
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
-optimizer = tf.train.AdamOptimizer().minimize(loss)
+with tf.name_scope('rnn'):
+    #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
+    lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
 
+    data = tf.cast(data,tf.float32)
+    rnn_out, state = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
+    tf.summary.histogram('rnn_out', rnn_out)
+
+
+with tf.name_scope('hidden'):
+    value = tf.transpose(rnn_out, [1, 0, 2])
+    rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
+    with tf.variable_scope('hidden'):
+        weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
+    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
+    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    tf.summary.histogram('hid_out__for_prediction', prediction)
+
+with tf.name_scope('accuracy'):
+    correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
+    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
+with tf.name_scope('loss'):
+    #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
+
+with tf.name_scope('optimize'):
+    optimizer = tf.train.AdamOptimizer().minimize(loss)
+
+sess = tf.Session()
 
 #Step3.3: defind config for Tensorboard
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
 logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
-writer = tf.summary.FileWriter(logdir, sess.graph)
+writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
-'''
+
 #Step4.0: inital config of training
 sess = tf.InteractiveSession()
 saver = tf.train.Saver()
@@ -281,14 +297,15 @@ for i in range(iterations):
        print("saved to %s" % save_path)
 
 writer.close()
-'''
 
+
+'''
 #Step5.0: loading model
 
 sess = tf.InteractiveSession()
 saver = tf.train.Saver()
 saver.restore(sess, tf.train.latest_checkpoint('models'))
-
+'''
 
 '''
 #Step5.1: testing the model
@@ -299,7 +316,7 @@ for i in range(iterations):
 '''
 
 
-
+'''
 #Step5.2: testing the model by string
 def testingSpeech(source):
     source = source.replace(" ", "") #remove space
@@ -342,3 +359,4 @@ testingSpeech("[其他]  嗨")
 testingSpeech("[提出論點或證據]  不過基本上 這樣國營企業要倒掉民營化是很難的")
 testingSpeech("[其他]  你好友善 我旁邊感覺快吵起來惹哈哈哈")
 testingSpeech("[表達同意或支持]  我應該是同意吧")
+'''
