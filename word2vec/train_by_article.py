@@ -303,7 +303,7 @@ sess.run(init)
 
 
 
-num_steps = 2000000
+num_steps = 200000000
 average_loss_num_step = 2000
 
 assert average_loss_num_step < num_steps
