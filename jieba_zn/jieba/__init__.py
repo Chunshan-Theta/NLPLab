@@ -511,8 +511,9 @@ lcut_for_search = dt.lcut_for_search
 del_word = dt.del_word
 get_DAG = dt.get_DAG
 get_dict_file = dt.get_dict_file
-#dt.load_userdict(get_module_res('dict.txt.tw'))
-dt.load_userdict(get_module_res('dict.txt'))
+#dt.load_userdict(get_module_res('dict.txt'))
+dt.load_userdict(get_module_res('tw.dict.all'))
+dt.load_userdict(get_module_res('tw.dict.new'))
 initialize = dt.initialize
 load_userdict = dt.load_userdict
 set_dictionary = dt.set_dictionary

@@ -2,7 +2,8 @@ from __future__ import absolute_import, unicode_literals
 import os
 import re
 import sys
-import jieba
+#import jieba
+from ... import jieba
 import pickle
 from .._compat import *
 from .viterbi import viterbi
@@ -105,7 +106,7 @@ class POSTokenizer(object):
                 word, _, tag = line.split(" ")
                 self.word_tag_tab[word] = tag
             except ValueError as e:
-                print 'ValueError: ',e
+                print('ValueError: ',e)
         f.close()
 
     def makesure_userdict_loaded(self):

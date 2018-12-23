@@ -5,7 +5,9 @@ from __future__ import absolute_import, unicode_literals
 import sys
 from operator import itemgetter
 from collections import defaultdict
-import jieba.posseg
+#import jieba.posseg
+from ... import jieba
+from .. import posseg
 from .tfidf import KeywordExtractor
 from .._compat import *
 
