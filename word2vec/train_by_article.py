@@ -40,7 +40,7 @@ def read_data():
     with open('stop_words.txt',"r") as f:
         line = f.readline()
         while line:
-            stop_words.append(line[:-1].decode('utf-8'))
+            stop_words.append(line[:-1])
             line = f.readline()
     stop_words = list(stop_words)
     print('停用詞讀取完畢，共{n}個詞'.format(n=len(stop_words)))
@@ -203,7 +203,7 @@ for i in xrange(E_point-valid_size,E_point):
 print('valid_word')
 print(valid_word)
 
-valid_examples =[dictionary[li.decode('utf-8')] for li in valid_word]
+valid_examples =[dictionary[li] for li in valid_word]
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
@@ -284,8 +284,9 @@ def result_Json(final_embeddings,dictionary,idx=0,componentsNum =300,filename='i
     for i in range(lenDoct):
         #fetch = {dictionary[i]:low_dim_embs[i]}
         logging.debug('result_Json step:'+str(i)+'/'+str(lenDoct))
-        re_list[dictionary[i].encode('utf-8')] = low_dim_embs[i].tolist()
-    f = open(outputText,'wa')
+        print(dictionary[i].encode('utf-8').decode('utf-8'))
+        re_list[dictionary[i].encode('utf-8').decode('utf-8')] = low_dim_embs[i].tolist()
+    f = open(outputText,'w')
 
     re_list = json.dumps(re_list, ensure_ascii=False)
     f.write(re_list)
