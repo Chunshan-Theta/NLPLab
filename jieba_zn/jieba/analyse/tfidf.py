@@ -4,7 +4,12 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+jiebaRoot = os.path.dirname(os.path.abspath(__file__))
+jiebaRoot = jiebaRoot[:jiebaRoot.rfind("/")]
+jiebaRoot = jiebaRoot[:jiebaRoot.rfind("/")]
+sys.path.append(jiebaRoot)
+
+
 import jieba
 import jieba.posseg
 from operator import itemgetter
@@ -95,7 +100,7 @@ class TFIDF(KeywordExtractor):
             allowPOS = frozenset(allowPOS)
             words = self.postokenizer.cut(sentence)
         else:
-            words = self.tokenizer.cut(sentence)
+            words = self.tokenizer.cut(sentence,cut_all=True)
         freq = {}
         for w in words:
             if allowPOS:

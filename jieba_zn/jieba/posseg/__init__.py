@@ -2,15 +2,14 @@ from __future__ import absolute_import, unicode_literals
 import os
 import re
 import sys
+
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import jieba
+
 import pickle
 from .._compat import *
 from .viterbi import viterbi
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-import jieba
-
 
 PROB_START_P = "prob_start.p"
 PROB_TRANS_P = "prob_trans.p"
