@@ -4,9 +4,9 @@
 import os
 import sys
 
-
-from ... import jieba
-from .. import posseg
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import jieba
+import jieba.posseg
 from operator import itemgetter
 
 

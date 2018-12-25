@@ -6,8 +6,10 @@ import sys
 from operator import itemgetter
 from collections import defaultdict
 #import jieba.posseg
-from ... import jieba
-from .. import posseg
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import jieba
+import jieba.posseg
 from .tfidf import KeywordExtractor
 from .._compat import *
 
