@@ -12,10 +12,17 @@ from random import randint
 import datetime
 import json
 import sys
-sys.path.append('../../jieba_zn/')
+'''
 import jieba
 import jieba.posseg as pseg
 import jieba.analyse
+'''
+
+sys.path.append('../../../jieba_zn/')
+import jieba
+from jieba import posseg as pseg
+import jieba.analyse
+
 from io import open
 
 
@@ -34,7 +41,7 @@ assert type(wordVectors.shape) is tuple
 '''
 
 
-Json_file = open("./znWord2Vec.txt","r")
+Json_file = open("./znWord2Vec300.txt","r")
 Json_file = json.load(Json_file)
 wordsList = [word for word in Json_file]
 print(wordsList[0])
@@ -81,10 +88,10 @@ with tf.Session() as sess:
 '''
 
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
-'''
+
 #Step 2.1: build embeddings structure of the sentence.
 #Could skip this step if the result was got.
-
+'''
 
 positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
 negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
@@ -109,7 +116,7 @@ numFiles = len(numWords)
 logging.info('The total number of files is '+str(numFiles))
 logging.info('The total number of words in the files is '+str(sum(numWords)))
 logging.info('The average number of words in the files is '+str(sum(numWords)/len(numWords)))
-maxSeqLength = 35
+maxSeqLength = 50
 
 
 #Step 2.2: convert words of the sentence to vector and insert to structure.
@@ -131,15 +138,18 @@ for pf in positiveFiles:
        #cleanedLine = cleanSentences(line)
        #split = cleanedLine.split()
        split = cleanSentences(line)
+       if len(split)<4:#ignoring the file if length don't fit to training
+           break
        for word in split:
            try:
-
-               logging.debug(word)
-               ids[fileCounter][indexCounter] = wordsList.index(word)
+               if len(word)<=1:
+                   raise ValueError("ignore mean-less words")
+               else:
+                   ids[fileCounter][indexCounter] = wordsList.index(word)
            except ValueError:
                ids[fileCounter][indexCounter] = finWord-1 #Vector for unkown words
            indexCounter = indexCounter + 1
-           if indexCounter >= maxSeqLength:
+           if indexCounter >= maxSeqLength :#ignoring continue string if length don't fit to training.
                break
        fileCounter = fileCounter + 1
 
@@ -150,21 +160,24 @@ for nf in negativeFiles:
        #cleanedLine = cleanSentences(line)
        #split = cleanedLine.split()
        split = cleanSentences(line)
+       if len(split)<4:#ignoring the file if length don't fit to training
+           break
        for word in split:
            try:
-               ids[fileCounter][indexCounter] = wordsList.index(word)
                if len(word)<=1:
-                   ids[fileCounter][indexCounter] = finWord-1 #ignore mean-less words
+                   raise ValueError("ignore mean-less words")
+               else:
+                   ids[fileCounter][indexCounter] = wordsList.index(word)
            except ValueError:
                ids[fileCounter][indexCounter] = finWord-1 #Vector for unkown words
            indexCounter = indexCounter + 1
-           if indexCounter >= maxSeqLength:
+           if indexCounter >= maxSeqLength:#ignoring continue string it if length don't fit to training.
                break
        fileCounter = fileCounter + 1
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
-
 '''
+
 
 
 
@@ -174,12 +187,12 @@ ids = np.load('idsMatrix.npy')
 
 #Step3.2: defind config for training
 
-batchSize = 24
+batchSize = 12
 lstmUnits = 64
 numClasses = 2
 iterations = 300000 * 8   #300000 = 1 hr
-maxSeqLength = 35
-numDimensions = 2
+maxSeqLength = 50
+numDimensions = 300
 
 positiveFilesCount = len(listdir('positiveReviews/'))#5251
 negativeFilesCount = len(listdir('negativeReviews/'))#4764
@@ -236,18 +249,46 @@ with tf.name_scope('rnn'):
     data = tf.cast(data,tf.float32)
     rnn_out, state = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
     tf.summary.histogram('rnn_out', rnn_out)
-
-
-with tf.name_scope('hidden'):
+'''
+with tf.name_scope('hidden1'):
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
-    with tf.variable_scope('hidden'):
+    with tf.variable_scope('hidden1'):
+    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
         weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
         bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
     #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
+    prediction_hidden1 = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    prediction = prediction_hidden1
+    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction_hidden1)
+'''
+
+with tf.name_scope('hidden1'):
+    value = tf.transpose(rnn_out, [1, 0, 2])
+    rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
+    with tf.variable_scope('hidden1'):
+        weight = tf.Variable(tf.truncated_normal([64, 32]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[32]),name="bias")
+    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
+    prediction_hidden1 = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction_hidden1)
+
+
+with tf.name_scope('hidden2'):
+    with tf.variable_scope('hidden2'):
+        weight = tf.Variable(tf.truncated_normal([32, 2]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[2]),name="bias")
+
+    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
     #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    tf.summary.histogram('hid_out__for_prediction', prediction)
+
+
+    prediction = tf.nn.softmax(tf.add(tf.matmul(prediction_hidden1, weight),bias))
+    tf.summary.histogram('hid_out__for_prediction_hidden2', prediction)
 
 with tf.name_scope('accuracy'):
     correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
@@ -258,15 +299,17 @@ with tf.name_scope('loss'):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
 
 with tf.name_scope('optimize'):
-    optimizer = tf.train.AdamOptimizer().minimize(loss)
-
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)#learning_rate inital value is 0.001
+    #optimizer = tf.train.AdagradOptimizer(learning_rate=0.001).minimize(loss)
+    #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
 sess = tf.Session()
 
 #Step3.3: defind config for Tensorboard
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
-logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
+logdir = "tensorboard/tanh_softmax_" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
 writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
@@ -276,10 +319,11 @@ sess = tf.InteractiveSession()
 saver = tf.train.Saver()
 sess.run(tf.global_variables_initializer())
 
+print("training process start")
 #Step4.1: training
 for i in range(iterations):
    #Next Batch of reviews
-   nextBatch, nextBatchLabels = getTrainBatch();
+   nextBatch, nextBatchLabels = getTrainBatch()
    sess.run(optimizer, {input_data: nextBatch, labels: nextBatchLabels})
 
    #Write summary to Tensorboard
@@ -288,8 +332,8 @@ for i in range(iterations):
        writer.add_summary(summary, i)
 
        #Accuracy
-       nextBatch, nextBatchLabels = getTestBatch();
-       print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
+       nextBatch, nextBatchLabels = getTestBatch()
+       print(str(i),"Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
 
    #Save the network every 10,000 training iterations
    if (i % 10000 == 0 and i != 0):
