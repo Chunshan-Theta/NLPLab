@@ -172,11 +172,11 @@ def showDetail(T_name,T,detail=0):
 
 
 # Step 4: Build and train a skip-gram model.
-batch_size = 600
+batch_size = 48
 embedding_size = 600
 skip_window = 1    # 2*skip_window >= num_skips
 num_skips = 2       # = batch_size/n
-num_sampled = 64    # Number of negative examples to sample.
+num_sampled = 48    # Number of negative examples to sample.
 
 assert batch_size%num_skips==0
 assert 2*skip_window >= num_skips
@@ -200,8 +200,8 @@ for i in xrange(E_point-valid_size,E_point):
     valid_word.append(reverse_dictionary[i].encode('utf-8'))
 '''
 #showDetail("valid_word",valid_word)
-print('valid_word')
-print(valid_word)
+#print('valid_word')
+#print(valid_word)
 
 valid_examples =[dictionary[li] for li in valid_word]
 graph = tf.Graph()
@@ -242,7 +242,7 @@ with graph.as_default():
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Optimizer'):
         #optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(1.0).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)
 
 
     # Compute the cosine similarity between minibatch examples and all embeddings.
@@ -284,7 +284,7 @@ def result_Json(final_embeddings,dictionary,idx=0,componentsNum =300,filename='i
     for i in range(lenDoct):
         #fetch = {dictionary[i]:low_dim_embs[i]}
         logging.debug('result_Json step:'+str(i)+'/'+str(lenDoct))
-        print(dictionary[i].encode('utf-8').decode('utf-8'))
+        #print(dictionary[i].encode('utf-8').decode('utf-8'))
         re_list[dictionary[i].encode('utf-8').decode('utf-8')] = low_dim_embs[i].tolist()
     f = open(outputText,'w')
 
@@ -304,8 +304,8 @@ sess.run(init)
 
 
 
-num_steps = 200000000
-average_loss_num_step = 2000
+num_steps = 100000
+average_loss_num_step = 50
 
 assert average_loss_num_step < num_steps
 average_loss = 0
