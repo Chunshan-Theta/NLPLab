@@ -187,10 +187,10 @@ ids = np.load('idsMatrix.npy')
 
 #Step3.2: defind config for training
 
-batchSize = 12
+batchSize = 24
 lstmUnits = 64
 numClasses = 2
-iterations = 300000 * 8   #300000 = 1 hr
+iterations = 100*1000   #300000 = 1 hr
 maxSeqLength = 50
 numDimensions = 300
 
@@ -214,19 +214,72 @@ def getTrainBatch():
 
     return arr, labels
 
-def getTestBatch():
-    testRange = testingFilesCount/2
-    labels = []
-    arr = np.zeros([batchSize, maxSeqLength])
-    for i in range(batchSize):
-        num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
-        if (num <= positiveFilesCount):
-            labels.append([1,0])
-        else:
-            labels.append([0,1])
-        arr[i] = ids[num-1:num]
-    return arr, labels
+def getTestBatch(type='default'):
+    if type=="coArgu":
 
+        arr=[]
+        labels = []
+        p=["我同意",
+        "你說的沒錯",
+        "我同意很好",
+        "我認為我們的共識是正確的",
+        "妳的論述很合理",
+        "我認同你的論點",
+        "你說的很好",
+        "我認為你的推論很正確有很多證據可以證明你的論點",
+        "我相信妳的推論聽起來很有道理",
+        "你說的是正確的的確證據是顯示出這樣的情況",
+        "妳的說法還有一些漏洞但我大致上認同你的論述",
+        "妳說的怪怪的但大致上你的論述還算合理"]
+
+        n = ["我不同意",
+        "你說的並不正確",
+        "我不同意你的看法",
+        "我們目前還沒有共識",
+        "你說的部分有點問題",
+        "妳的論述並不合理",
+        "我沒辦法認同你的論點",
+        "我認為你的推論很不正確除非我有看到更多的證據來判斷",
+        "我沒辦法相信妳的推論除非妳有更多的證據可以證明",
+        "你說的是錯誤的的確證據並沒有顯示出這樣的情況",
+        "你說的聽起來很有道理但我們應該要拿出證據說話",
+        "我能夠體會妳的想法但我認為其中有些問題"]
+        for s in p:
+            unitSentence = np.zeros((maxSeqLength), dtype='int32')
+            sl = jieba.lcut(s)
+            for w_idx in range(len(sl)):
+                if sl[w_idx] in wordsList:
+                    unitSentence[w_idx] = wordsList.index(sl[w_idx])
+                else:
+                    unitSentence[w_idx] = finWord-1
+            arr.append(unitSentence)
+            labels.append([1,0])
+        for s in n:
+            unitSentence = np.zeros((maxSeqLength), dtype='int32')
+            sl = jieba.lcut(s)
+            for w_idx in range(len(sl)):
+                if sl[w_idx] in wordsList:
+                    unitSentence[w_idx] = wordsList.index(sl[w_idx])
+                else:
+                    unitSentence[w_idx] = finWord-1
+            arr.append(unitSentence)
+            labels.append([0,1])
+        return arr, labels
+
+    elif type=='default':
+        testRange = testingFilesCount/2
+        labels = []
+        arr = np.zeros([batchSize, maxSeqLength])
+        for i in range(batchSize):
+            num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
+            if (num <= positiveFilesCount):
+                labels.append([1,0])
+            else:
+                labels.append([0,1])
+            arr[i] = ids[num-1:num]
+        return arr, labels
+    else:
+        raise ValueError("undefined type")
 
 
 tf.reset_default_graph()
@@ -249,7 +302,7 @@ with tf.name_scope('rnn'):
     data = tf.cast(data,tf.float32)
     rnn_out, state = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
     tf.summary.histogram('rnn_out', rnn_out)
-'''
+
 with tf.name_scope('hidden1'):
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
@@ -258,11 +311,11 @@ with tf.name_scope('hidden1'):
         weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
         bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
     #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    prediction_hidden1 = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    prediction = prediction_hidden1
-    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction_hidden1)
+
+    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction)
 '''
 
 with tf.name_scope('hidden1'):
@@ -280,16 +333,29 @@ with tf.name_scope('hidden1'):
 
 with tf.name_scope('hidden2'):
     with tf.variable_scope('hidden2'):
-        weight = tf.Variable(tf.truncated_normal([32, 2]),name="weight")
+        weight = tf.Variable(tf.truncated_normal([32, 16]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[16]),name="bias")
+    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction_hidden1, weight),bias))
+    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
+with tf.name_scope('hidden3'):
+    with tf.variable_scope('hidden3'):
+        weight = tf.Variable(tf.truncated_normal([16, 8]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[8]),name="bias")
+    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
+    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
+with tf.name_scope('hidden4'):
+    with tf.variable_scope('hidden4'):
+        weight = tf.Variable(tf.truncated_normal([8, 4]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[4]),name="bias")
+    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
+    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
+with tf.name_scope('hidden5'):
+    with tf.variable_scope('hidden5'):
+        weight = tf.Variable(tf.truncated_normal([4, 2]),name="weight")
         bias = tf.Variable(tf.constant(0.1, shape=[2]),name="bias")
-
-    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
-
-
-    prediction = tf.nn.softmax(tf.add(tf.matmul(prediction_hidden1, weight),bias))
-    tf.summary.histogram('hid_out__for_prediction_hidden2', prediction)
-
+    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
+    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
+'''
 with tf.name_scope('accuracy'):
     correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
     accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
@@ -299,7 +365,7 @@ with tf.name_scope('loss'):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
 
 with tf.name_scope('optimize'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)#learning_rate inital value is 0.001
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)#learning_rate inital value is 0.001
     #optimizer = tf.train.AdagradOptimizer(learning_rate=0.001).minimize(loss)
     #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
     #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
@@ -309,7 +375,7 @@ sess = tf.Session()
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
-logdir = "tensorboard/tanh_softmax_" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
+logdir = "tensorboard/H5_tanh_LR0001_" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
 writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
