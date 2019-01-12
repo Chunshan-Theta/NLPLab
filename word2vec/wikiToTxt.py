@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = "ALEX-CHUN-YU (P76064538@mail.ncku.edu.tw)"
+__author_url__ ="https://github.com/Alex-CHUN-YU/Word2vec"
+
 import logging
 import sys
 import warnings
@@ -33,6 +35,8 @@ class Wiki_to_txt(object):
 				text_count += 1
 				if text_count % 10000 == 0:
 					logging.info("目前已處理 %d 篇文章" % text_count)
+				if text_count > 20000 :
+					break
 			print("轉檔完畢!")
 
 if __name__ == "__main__":

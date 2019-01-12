@@ -242,7 +242,7 @@ with graph.as_default():
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Optimizer'):
         #optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.01).minimize(loss)
 
 
     # Compute the cosine similarity between minibatch examples and all embeddings.

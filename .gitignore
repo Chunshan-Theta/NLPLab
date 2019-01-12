@@ -5,3 +5,6 @@ sentiment/py3/zn/znWord2Vec300.txt
 sentiment/py3/zn/models/
 word2vec/TB/*.gavin
 sentiment/py3/zn/idsMatrix.npy
+word2vec/zhwiki-latest-pages-articles.xml.bz2
+word2vec/wiki_text.txt
+word2vec/TextForTrain
