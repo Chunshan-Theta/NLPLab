@@ -9,6 +9,7 @@ import math
 import random
 import sys
 sys.path.append('../jieba_zn/')
+sys.path.append('../nstools/')
 import jieba
 import numpy as np
 from six.moves import xrange
@@ -23,7 +24,7 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import json
 logging.basicConfig(level=logging.INFO)
-
+from langconv import *
 if not os.path.exists("TB"):
     logging.info("create a folder: TB")
     os.makedirs("TB")
@@ -48,13 +49,23 @@ def read_data():
     # 读取文本，预处理，分词，得到词典
     raw_word_list = []
 
-    path = './TextForTrain'
-
+    path = './wiki'
+    
     for filename in os.listdir(path):
         logging.debug(str(len(raw_word_list))+'loading: '+str(path)+'/'+filename)
         with open(path+'/'+filename,"r") as f:#filter
-            line = re.sub("[A-Za-z0-9]", "", f.readline())
-            while line:#filter
+            idx = 0
+            fileLen = str(len(f))
+            for line in f:
+                
+                #clear special character:only chinese
+                line = re.sub("[^\u4e00-\u9fff]", "", line)
+
+                #simplified to treditional 
+                line = Converter('zh-hant').convert(line)
+
+                idx+=1
+                logging.info(str(idx)+'/'+fileLen+' loading text:'+line[:10]+'......')
                 while '\n' in line:
                     line = line.replace('\n','')
                 while ' ' in line:
@@ -65,19 +76,18 @@ def read_data():
                     for w in raw_words:
                         if w not in stop_words:
                             raw_word_list.append(w)
-                    #raw_word_list.extend(raw_words)
-                line = re.sub("[A-Za-z0-9]", "", f.readline())
+                    
     return raw_word_list
 
 #step 1:读取文件中的内容组成一个列表
-logging.info("Begin loading step.");
+logging.info("Begin loading step.")
 words = read_data()
 print('Data size', len(words))
-logging.info("Begin loading completed.");
+logging.info("Begin loading completed.")
 
 
 # Step 2: Build the dictionary and replace rare words with UNKNOWWORD token.
-useValue = 0.8 #max is 1
+useValue = 0.2 #max is 1
 vocabulary_size = int(len(collections.Counter(words))*useValue) #55000
 
 
@@ -86,8 +96,12 @@ assert useValue <= 1
 print("count of dict:",len(collections.Counter(words)),"use :",vocabulary_size)
 def build_dataset(words):
     count = [['UNKNOWWORD', -1]]
-    count.extend(collections.Counter(words).most_common(vocabulary_size - 1))
-    print("count",len(count))
+    #Converted to Counter object
+    cWords = collections.Counter(words) 
+    #show text
+    logging.info(cWords['基因'])
+    count.extend(cWords.most_common(vocabulary_size - 1))
+    logging.info("count"+str(len(count)))
     dictionary = dict()
     for word, _ in count:
         dictionary[word] = len(dictionary)
@@ -172,7 +186,7 @@ def showDetail(T_name,T,detail=0):
 
 
 # Step 4: Build and train a skip-gram model.
-batch_size = 48
+batch_size = 4
 embedding_size = 600
 skip_window = 1    # 2*skip_window >= num_skips
 num_skips = 2       # = batch_size/n
@@ -188,7 +202,7 @@ assert 2*skip_window >= num_skips
 starttime = datetime.datetime.now()
 
 valid_word=[]
-valid_word = ["貢獻","助於","錯誤","損失","遺憾"]
+valid_word = ["核能","基因","基改","核電廠"]
 
 
 
@@ -242,12 +256,12 @@ with graph.as_default():
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Optimizer'):
         #optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.01).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate=1.0).minimize(loss)
 
 
     # Compute the cosine similarity between minibatch examples and all embeddings.
     with tf.name_scope('normalized'):
-        norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=True))
+        norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keepdims=True))
         normalized_embeddings = embeddings / norm
         valid_embeddings = tf.nn.embedding_lookup(normalized_embeddings, valid_dataset)
     '''
@@ -304,8 +318,8 @@ sess.run(init)
 
 
 
-num_steps = 100000
-average_loss_num_step = 50
+num_steps = 100001
+average_loss_num_step = 20
 
 assert average_loss_num_step < num_steps
 average_loss = 0

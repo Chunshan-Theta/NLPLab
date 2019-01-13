@@ -91,7 +91,7 @@ with tf.Session() as sess:
 
 #Step 2.1: build embeddings structure of the sentence.
 #Could skip this step if the result was got.
-'''
+
 
 positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
 negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
@@ -176,7 +176,7 @@ for nf in negativeFiles:
        fileCounter = fileCounter + 1
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
-'''
+
 
 
 
@@ -302,7 +302,7 @@ with tf.name_scope('rnn'):
     data = tf.cast(data,tf.float32)
     rnn_out, state = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
     tf.summary.histogram('rnn_out', rnn_out)
-
+'''
 with tf.name_scope('hidden1'):
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
@@ -333,29 +333,12 @@ with tf.name_scope('hidden1'):
 
 with tf.name_scope('hidden2'):
     with tf.variable_scope('hidden2'):
-        weight = tf.Variable(tf.truncated_normal([32, 16]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[16]),name="bias")
+        weight = tf.Variable(tf.truncated_normal([32, 2]),name="weight")
+        bias = tf.Variable(tf.constant(0.1, shape=[2]),name="bias")
     prediction = tf.nn.tanh(tf.add(tf.matmul(prediction_hidden1, weight),bias))
     tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
-with tf.name_scope('hidden3'):
-    with tf.variable_scope('hidden3'):
-        weight = tf.Variable(tf.truncated_normal([16, 8]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[8]),name="bias")
-    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
-    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
-with tf.name_scope('hidden4'):
-    with tf.variable_scope('hidden4'):
-        weight = tf.Variable(tf.truncated_normal([8, 4]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[4]),name="bias")
-    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
-    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
-with tf.name_scope('hidden5'):
-    with tf.variable_scope('hidden5'):
-        weight = tf.Variable(tf.truncated_normal([4, 2]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[2]),name="bias")
-    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction, weight),bias))
-    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
-'''
+
+
 with tf.name_scope('accuracy'):
     correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
     accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
