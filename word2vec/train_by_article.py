@@ -55,9 +55,7 @@ def read_data():
         logging.debug(str(len(raw_word_list))+'loading: '+str(path)+'/'+filename)
         with open(path+'/'+filename,"r") as f:#filter
             idx = 0
-            fileLen = str(len(f))
             for line in f:
-                
                 #clear special character:only chinese
                 line = re.sub("[^\u4e00-\u9fff]", "", line)
 
@@ -65,7 +63,7 @@ def read_data():
                 line = Converter('zh-hant').convert(line)
 
                 idx+=1
-                logging.info(str(idx)+'/'+fileLen+' loading text:'+line[:10]+'......')
+                logging.info(str(idx)+' loading text:'+line[:10]+'......')
                 while '\n' in line:
                     line = line.replace('\n','')
                 while ' ' in line:
@@ -271,7 +269,6 @@ with graph.as_default():
     '''
     # Add variable initializer.
     merged = tf.summary.merge_all()
-    init = tf.global_variables_initializer()
 
 
 def writeLog(name,text):
@@ -326,12 +323,16 @@ average_loss = 0
 averagelossline_record=[]
 
 with tf.Session(graph=graph) as sess:
-    # We must initialize all variables before we use them.
-    init.run()
-    logging.info("Initialized")
+    
+   
+    logging.info("started")
     writer = tf.summary.FileWriter("TB/", graph = sess.graph)#TensorBoard
 
     for step in xrange(num_steps):
+        # We must initialize all variables before we use them.
+        sess.run(tf.global_variables_initializer())
+	
+        #training stage
         batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
         showDetail("batch_inputs",batch_inputs)#Qusetion 128*1
         showDetail("batch_labels",batch_labels)#Answer 128*1
@@ -342,7 +343,7 @@ with tf.Session(graph=graph) as sess:
         logging.info("loss for this step("+str(step)+"):"+str(float(stepLoss)))
         writer.add_summary(stepMerged, step)
         average_loss += float(stepLoss)
-
+        
         if step % average_loss_num_step == 0:
                 if step > 0:
                     average_loss /= average_loss_num_step
