@@ -3,29 +3,9 @@
 
 ----
 
-## Crawler:
-	Getting the date from website:
-		1:scientific article
-		2:Positive and negatiave review
-----
-## jieba_zn:
-	Setting for traditional Chinese
-----
-## ModelTesting:
-	the testing of model of nlp
-----
-## nstools:
-	converting simplified to traditional
-----
+
 ## sentiment:
 	implement of sentiment model in Chinese
-----
-## TextRank:
-	implement of TextRank model
-----
-## tf-idf-shortstr:
-	implement of tf-idf model
-
 ----
 
 ## word2vec:
@@ -55,6 +35,31 @@
 		> training stage
 		> TensorBoard (will output to word2vec/TB/)
 		> output to Json txt file :result_Json
+----
+
+## Crawler:
+	Getting the date from website:
+		1:scientific article
+		2:Positive and negatiave review
+## ModelTesting:
+	the testing of model of nlp
+----
+## jieba_zn:
+	Setting for traditional Chinese
+
+
+
+## nstools:
+	converting simplified to traditional
+
+----
+## TextRank:
+	implement of TextRank model
+
+## tf-idf-shortstr:
+	implement of tf-idf model
+
+
 	
 
 
