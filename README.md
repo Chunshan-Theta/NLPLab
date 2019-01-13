@@ -31,26 +31,26 @@
 
 ### word2vec/train_by_article.py
 1. loading the train data
-	>  讀取停用字 loading stop words ( word2vec/stop_words.txt.py )
-	>  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
-	    the main step:
-	    * clear special character:only chinese
-	    * simplified to treditional (../nstools/)
+		>  讀取停用字 loading stop words ( word2vec/stop_words.txt.py )
+		>  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
+		the main step:
+		* clear special character:only chinese
+		* simplified to treditional (../nstools/)
 
 2. Build the dictionary and replace rare words with UNKNOWWORD token.
-	>  Build the dictionary
-	>  rare words processed
-	    the main step:
-	    * Setting the size of the word set for the training model
-	    * using function: collections.Counter().most_common()
+		>  Build the dictionary
+		>  rare words processed
+		the main step:
+		* Setting the size of the word set for the training model
+		* using function: collections.Counter().most_common()
 3. Function to generate a training batch for the skip-gram model.
 4. Build and train a skip-gram model.
-	> Loss: tf.nn.nce_loss()
-	> Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
+		> Loss: tf.nn.nce_loss()
+		> Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
 5. Begin training
-	> training stage
-	> TensorBoard (will output to word2vec/TB/)
-	> output to Json txt file :result_Json
+		> training stage
+		> TensorBoard (will output to word2vec/TB/)
+		> output to Json txt file :result_Json
 	
 
 
