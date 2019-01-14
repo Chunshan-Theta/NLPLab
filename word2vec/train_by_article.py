@@ -212,9 +212,22 @@ valid_examples =[dictionary[li] for li in valid_word]
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
+    step_train = tf.placeholder(tf.int32)
     train_inputs = tf.placeholder(tf.int32, shape=[batch_size],name='train_inputs')
     train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1],name='train_labels')
     valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
+    if step_train > 80000:
+	    lr =0.001    
+    elif step_train > 40000:
+	    lr =0.003    
+    elif step_train > 20000:
+	    lr =0.005
+    elif step_train > 10000:
+	    lr =0.01
+    elif step_train > 100:
+    	lr =0.03
+    else:
+        lr =0.3
 
     # Ops and variables pinned to the CPU because of missing GPU implementation
     with tf.device('/cpu:0'):
@@ -248,7 +261,7 @@ with graph.as_default():
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Optimizer'):
         #optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
 
 
     # Compute the cosine similarity between minibatch examples and all embeddings.
@@ -325,7 +338,7 @@ with tf.Session(graph=graph) as sess:
         showDetail("batch_inputs",batch_inputs)#Qusetion 128*1
         showDetail("batch_labels",batch_labels)#Answer 128*1
 
-        nextDict = {train_inputs: batch_inputs, train_labels: batch_labels}
+        nextDict = {step_train:step,train_inputs: batch_inputs, train_labels: batch_labels}
 
         stepOptimizer,stepMerged,stepLoss = sess.run([optimizer,merged,loss],feed_dict=nextDict)
         logging.info("loss for this step("+str(step)+"):"+str(float(stepLoss)))

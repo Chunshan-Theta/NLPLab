@@ -1,6 +1,7 @@
 # NLPLab
 
-researching the core of nlp
+researching the core of nlp.
+contant: gavin19950511@gmail.com
 
 ----
 
