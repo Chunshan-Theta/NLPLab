@@ -33,6 +33,7 @@ if not os.path.exists("TB"):
 # Read the data into a list of strings.
 
 def read_data():
+    starttime_read_data = datetime.datetime.now()
     """
     对要训练的文本进行处理，最后把文本的内容的所有词放在一个列表中
     """
@@ -56,6 +57,7 @@ def read_data():
         with open(path+'/'+filename,"r") as f:#filter
             idx = 0
             for line in f:
+             
                 #clear special character:only chinese
                 line = re.sub("[^\u4e00-\u9fff]", "", line)
 
@@ -74,7 +76,9 @@ def read_data():
                     for w in raw_words:
                         if w not in stop_words:
                             raw_word_list.append(w)
-                    
+    starttime_read_data_done = datetime.datetime.now()
+    runtime=str((starttime_read_data_done-starttime_read_data).seconds)
+    print("runtime(s): ",runtime)
     return raw_word_list
 
 #step 1:读取文件中的内容组成一个列表
@@ -96,13 +100,15 @@ def build_dataset(words):
     count = [['UNKNOWWORD', -1]]
     #Converted to Counter object
     cWords = collections.Counter(words) 
-    #show text
-    logging.info(cWords['基因'])
+    for w in ["核能","基因","基改","核電廠"]:
+        if 5000>=cWords[w]:
+            cWords[w]= 5000
     count.extend(cWords.most_common(vocabulary_size - 1))
     logging.info("count"+str(len(count)))
     dictionary = dict()
     for word, _ in count:
         dictionary[word] = len(dictionary)
+    
     data = list()
     unknowword_count = 0
     for word in words:
@@ -201,20 +207,7 @@ starttime = datetime.datetime.now()
 
 valid_word=[]
 valid_word = ["核能","基因","基改","核電廠"]
-
-
-
 valid_size = len(valid_word)
-'''
-print(E_point-valid_size,E_point)
-
-for i in xrange(E_point-valid_size,E_point):
-    valid_word.append(reverse_dictionary[i].encode('utf-8'))
-'''
-#showDetail("valid_word",valid_word)
-#print('valid_word')
-#print(valid_word)
-
 valid_examples =[dictionary[li] for li in valid_word]
 graph = tf.Graph()
 with graph.as_default():
@@ -225,11 +218,12 @@ with graph.as_default():
 
     # Ops and variables pinned to the CPU because of missing GPU implementation
     with tf.device('/cpu:0'):
+        
         # Look up embeddings for inputs.
         with tf.name_scope('Embeddings'):
             embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0),name='Embeddings')
             embed = tf.nn.embedding_lookup(embeddings, train_inputs)
-            tf.summary.histogram(name ='Embeddings', values = embeddings)
+            tf.summary.histogram(name ='Embeddings', values = embed)
 
         # Construct the variables for the NCE loss
         with tf.name_scope('Weights'):
@@ -254,7 +248,7 @@ with graph.as_default():
     # Construct the SGD optimizer using a learning rate of 1.0.
     with tf.name_scope('Optimizer'):
         #optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate=1.0).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)
 
 
     # Compute the cosine similarity between minibatch examples and all embeddings.
@@ -262,13 +256,15 @@ with graph.as_default():
         norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keepdims=True))
         normalized_embeddings = embeddings / norm
         valid_embeddings = tf.nn.embedding_lookup(normalized_embeddings, valid_dataset)
-    '''
+    
     with tf.name_scope('prediction'):
         similarity = tf.matmul(valid_embeddings, normalized_embeddings, transpose_b=True)
         prediction = tf.nn.softmax(similarity)
-    '''
-    # Add variable initializer.
+    
+    # Merge all summaries.
     merged = tf.summary.merge_all()
+    # Add variable initializer.
+    init = tf.global_variables_initializer()
 
 
 def writeLog(name,text):
@@ -303,22 +299,13 @@ def result_Json(final_embeddings,dictionary,idx=0,componentsNum =300,filename='i
     f.write(re_list)
     f.close()
     logging.info("result_Json process completed.")
-logging.info("Begin training step.");
+
 
 # Step 5-ex: Begin training.
-
-'''
-sess = tf.Session(graph=graph)
-writer = tf.summary.FileWriter("TB/", graph = sess.graph)#TensorBoard
-sess.run(init)
-'''
-
-
-
+logging.info("Begin training step.");
 num_steps = 100001
 average_loss_num_step = 20
 
-assert average_loss_num_step < num_steps
 average_loss = 0
 averagelossline_record=[]
 
@@ -326,11 +313,12 @@ with tf.Session(graph=graph) as sess:
     
    
     logging.info("started")
+    # We must initialize all variables before we use them.
+    init.run()
     writer = tf.summary.FileWriter("TB/", graph = sess.graph)#TensorBoard
 
     for step in xrange(num_steps):
-        # We must initialize all variables before we use them.
-        sess.run(tf.global_variables_initializer())
+        
 	
         #training stage
         batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
@@ -339,7 +327,7 @@ with tf.Session(graph=graph) as sess:
 
         nextDict = {train_inputs: batch_inputs, train_labels: batch_labels}
 
-        stepMerged,stepLoss = sess.run([merged,loss],feed_dict=nextDict)
+        stepOptimizer,stepMerged,stepLoss = sess.run([optimizer,merged,loss],feed_dict=nextDict)
         logging.info("loss for this step("+str(step)+"):"+str(float(stepLoss)))
         writer.add_summary(stepMerged, step)
         average_loss += float(stepLoss)
@@ -369,11 +357,11 @@ with tf.Session(graph=graph) as sess:
                 #writeLog(valid_word,'--------')
         '''
         final_embeddings = normalized_embeddings.eval(session=sess)
-        if step % 50000 == 0:
+        if step % 20000 == 0:
             result_Json(final_embeddings,reverse_dictionary,str(step))
 
 print("training closed")
-'''
+
 # Step 6: Visualize the embeddings.
 def plot_with_labels(low_dim_embs, labels, filename='images/tsne3.png',fonts=None):
     assert low_dim_embs.shape[0] >= len(labels), "More labels than embeddings"
@@ -416,18 +404,17 @@ try:
     #   int, optional (default: 1000)
     #   Maximum number of iterations for the optimization. Should be at least 250.
 
-    plot_only = 500
-    #showDetail("final_embeddings",final_embeddings)
-    #showDetail("final_embeddings[0]",final_embeddings[0])
+    plot_only = 50
     final_embeddings_batch = final_embeddings[:plot_only, :]
-    result_Json(final_embeddings,reverse_dictionary)
-
     low_dim_embs = tsne.fit_transform(final_embeddings_batch)
-    #showDetail("low_dim_embs",low_dim_embs)
-
     labels = [reverse_dictionary[i] for i in xrange(plot_only)]
-
-    #plot_with_labels(low_dim_embs, labels,fonts=font)
+    plot_with_labels(low_dim_embs, labels,filename='images/tsne(50).png',fonts=font)
+    
+    plot_only = 100
+    final_embeddings_batch = final_embeddings[:plot_only, :]
+    low_dim_embs = tsne.fit_transform(final_embeddings_batch)
+    labels = [reverse_dictionary[i] for i in xrange(plot_only)]
+    plot_with_labels(low_dim_embs, labels,filename='images/tsne(100).png',fonts=font)
 
 
 
@@ -436,7 +423,7 @@ except ImportError:
 
 
 
-'''
+
 endtime = datetime.datetime.now()
 runtime=str((endtime-starttime).seconds)
 print("runtime(s): ",runtime)
