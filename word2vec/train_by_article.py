@@ -57,7 +57,6 @@ def read_data():
         with open(path+'/'+filename,"r") as f:#filter
             idx = 0
             for line in f:
-             
                 #clear special character:only chinese
                 line = re.sub("[^\u4e00-\u9fff]", "", line)
 
@@ -212,22 +211,12 @@ valid_examples =[dictionary[li] for li in valid_word]
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
-    step_train = tf.placeholder(tf.int32)
+    lr = tf.placeholder(tf.float32)
     train_inputs = tf.placeholder(tf.int32, shape=[batch_size],name='train_inputs')
     train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1],name='train_labels')
     valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
-    if step_train > 80000:
-	    lr =0.001    
-    elif step_train > 40000:
-	    lr =0.003    
-    elif step_train > 20000:
-	    lr =0.005
-    elif step_train > 10000:
-	    lr =0.01
-    elif step_train > 100:
-    	lr =0.03
-    else:
-        lr =0.3
+
+    
 
     # Ops and variables pinned to the CPU because of missing GPU implementation
     with tf.device('/cpu:0'):
@@ -313,69 +302,7 @@ def result_Json(final_embeddings,dictionary,idx=0,componentsNum =300,filename='i
     f.close()
     logging.info("result_Json process completed.")
 
-
-# Step 5-ex: Begin training.
-logging.info("Begin training step.");
-num_steps = 100001
-average_loss_num_step = 20
-
-average_loss = 0
-averagelossline_record=[]
-
-with tf.Session(graph=graph) as sess:
-    
-   
-    logging.info("started")
-    # We must initialize all variables before we use them.
-    init.run()
-    writer = tf.summary.FileWriter("TB/", graph = sess.graph)#TensorBoard
-
-    for step in xrange(num_steps):
-        
-	
-        #training stage
-        batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
-        showDetail("batch_inputs",batch_inputs)#Qusetion 128*1
-        showDetail("batch_labels",batch_labels)#Answer 128*1
-
-        nextDict = {step_train:step,train_inputs: batch_inputs, train_labels: batch_labels}
-
-        stepOptimizer,stepMerged,stepLoss = sess.run([optimizer,merged,loss],feed_dict=nextDict)
-        logging.info("loss for this step("+str(step)+"):"+str(float(stepLoss)))
-        writer.add_summary(stepMerged, step)
-        average_loss += float(stepLoss)
-        
-        if step % average_loss_num_step == 0:
-                if step > 0:
-                    average_loss /= average_loss_num_step
-                # The average loss is an estimate of the loss over the last 2000 batches.
-                logging.info("Average loss at step "+str(step)+": "+str(float(average_loss)))
-                average_loss = 0
-        '''
-        # Note that this is expensive (~20% slowdown if computed every 500 steps)
-        if step % (average_loss_num_step*3) == 0:
-
-            sim = similarity.eval(session=sess) # valid examples len * text dict len
-
-            for i in xrange(valid_size):
-                valid_word = reverse_dictionary[valid_examples[i]]
-                top_k = 50  # number of nearest neighbors
-                nearest = (-sim[i, :]).argsort()[:top_k]
-                log_str = "Nearest to %s:" % valid_word
-                for k in xrange(top_k):
-                    close_word = reverse_dictionary[nearest[k]]
-                    log_str = "%s %s," % (log_str, close_word)
-                    writeLog(valid_word,close_word)
-                print(log_str)
-                #writeLog(valid_word,'--------')
-        '''
-        final_embeddings = normalized_embeddings.eval(session=sess)
-        if step % 20000 == 0:
-            result_Json(final_embeddings,reverse_dictionary,str(step))
-
-print("training closed")
-
-# Step 6: Visualize the embeddings.
+# Step 5.0: Visualize the embeddings.
 def plot_with_labels(low_dim_embs, labels, filename='images/tsne3.png',fonts=None):
     assert low_dim_embs.shape[0] >= len(labels), "More labels than embeddings"
 
@@ -392,51 +319,122 @@ def plot_with_labels(low_dim_embs, labels, filename='images/tsne3.png',fonts=Non
                     va='bottom')
     plt.savefig(filename,dpi=800)
 
+def outputimage():
+    try:
+        from sklearn.manifold import TSNE
+        import matplotlib.pyplot as plt
+        from matplotlib.font_manager import FontProperties
 
-try:
-    from sklearn.manifold import TSNE
-    import matplotlib.pyplot as plt
-    from matplotlib.font_manager import FontProperties
+        #为了在图片上能显示出中文
+        font = FontProperties(fname=r"./simsun.ttc", size=14)
 
-    #为了在图片上能显示出中文
-    font = FontProperties(fname=r"./simsun.ttc", size=14)
+        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+        #perplexity:
+        #   float, optional (default: 30)
+        #   The perplexity is related to the number of nearest neighbors that is used in other manifold learning algorithms. Larger datasets usually require a larger perplexity. Consider selecting a value between 5 and 50. The choice is not extremely critical since t-SNE is quite insensitive to this parameter.
 
-    tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
-    #perplexity:
-    #   float, optional (default: 30)
-    #   The perplexity is related to the number of nearest neighbors that is used in other manifold learning algorithms. Larger datasets usually require a larger perplexity. Consider selecting a value between 5 and 50. The choice is not extremely critical since t-SNE is quite insensitive to this parameter.
+        #n_components :
+        #   int, optional (default: 2)
+        #   Dimension of the embedded space.
 
-    #n_components :
-    #   int, optional (default: 2)
-    #   Dimension of the embedded space.
+        #init:
+        #   Initialization of embedding. Possible options are ‘random’, ‘pca’, and a numpy array of shape (n_samples, n_components). PCA initialization cannot be used with precomputed distances and is usually more globally stable than random initialization.
 
-    #init:
-    #   Initialization of embedding. Possible options are ‘random’, ‘pca’, and a numpy array of shape (n_samples, n_components). PCA initialization cannot be used with precomputed distances and is usually more globally stable than random initialization.
+        #n_iter :
+        #   int, optional (default: 1000)
+        #   Maximum number of iterations for the optimization. Should be at least 250.
 
-    #n_iter :
-    #   int, optional (default: 1000)
-    #   Maximum number of iterations for the optimization. Should be at least 250.
+        plot_only = 50
+        final_embeddings_batch = final_embeddings[:plot_only, :]
+        low_dim_embs = tsne.fit_transform(final_embeddings_batch)
+        labels = [reverse_dictionary[i] for i in xrange(plot_only)]
+        plot_with_labels(low_dim_embs, labels,filename='images/tsne(50).png',fonts=font)
+        
+        plot_only = 100
+        final_embeddings_batch = final_embeddings[:plot_only, :]
+        low_dim_embs = tsne.fit_transform(final_embeddings_batch)
+        labels = [reverse_dictionary[i] for i in xrange(plot_only)]
+        plot_with_labels(low_dim_embs, labels,filename='images/tsne(100).png',fonts=font)
 
-    plot_only = 50
-    final_embeddings_batch = final_embeddings[:plot_only, :]
-    low_dim_embs = tsne.fit_transform(final_embeddings_batch)
-    labels = [reverse_dictionary[i] for i in xrange(plot_only)]
-    plot_with_labels(low_dim_embs, labels,filename='images/tsne(50).png',fonts=font)
+
+
+    except ImportError:
+        print("Please install sklearn, matplotlib, and scipy to visualize embeddings.")
+
+# Step 5-ex: Begin training.
+logging.info("Begin training step.");
+num_steps = 100001
+average_loss_num_step = 20
+
+average_loss = 0
+averagelossline_record=[]
+
+with tf.Session(graph=graph) as sess:
     
-    plot_only = 100
-    final_embeddings_batch = final_embeddings[:plot_only, :]
-    low_dim_embs = tsne.fit_transform(final_embeddings_batch)
-    labels = [reverse_dictionary[i] for i in xrange(plot_only)]
-    plot_with_labels(low_dim_embs, labels,filename='images/tsne(100).png',fonts=font)
+   
+    logging.info("started")
+    # We must initialize all variables before we use them.
+    init.run()
+    writer = tf.summary.FileWriter("TB/now/", graph = sess.graph)#TensorBoard
+
+    for step in xrange(num_steps):
+        
+	    # learning rate
+        if int(step) > 80000:
+	        batch_lr =0.001    
+        elif int(step) > 40000:
+	        batch_lr =0.003    
+        elif int(step) > 20000:
+	        batch_lr =0.005
+        elif int(step) > 10000:
+	        batch_lr =0.01
+        else:
+            batch_lr =0.03
+        #training stage
+        batch_inputs, batch_labels = generate_batch(batch_size, num_skips, skip_window)
+        showDetail("batch_inputs",batch_inputs)#Qusetion 128*1
+        showDetail("batch_labels",batch_labels)#Answer 128*1
+
+        nextDict = {lr:batch_lr,train_inputs: batch_inputs, train_labels: batch_labels}
+
+        stepOptimizer,stepMerged,stepLoss = sess.run([optimizer,merged,loss],feed_dict=nextDict)
+        logging.info("loss for this step("+str(step)+"):"+str(float(stepLoss)))
+        writer.add_summary(stepMerged, step)
+        average_loss += float(stepLoss)
+        
+        if step % average_loss_num_step == 0:
+                if step > 0:
+                    average_loss /= average_loss_num_step
+                # The average loss is an estimate of the loss over the last 2000 batches.
+                logging.info("Average loss at step "+str(step)+": "+str(float(average_loss)))
+                average_loss = 0
+        
+        # Note that this is expensive (~20% slowdown if computed every 500 steps)
+        if step % 50000 == 0:
+
+            sim = similarity.eval(session=sess) # valid examples len * text dict len
+
+            for i in xrange(valid_size):
+                valid_word = reverse_dictionary[valid_examples[i]]
+                top_k = 50  # number of nearest neighbors
+                nearest = (-sim[i, :]).argsort()[:top_k]
+                log_str = "Nearest to %s:" % valid_word
+                for k in xrange(top_k):
+                    close_word = reverse_dictionary[nearest[k]]
+                    log_str = "%s %s," % (log_str, close_word)
+                    writeLog(valid_word,close_word)
+                print(log_str)
+                #writeLog(valid_word,'--------')
+        
+        final_embeddings = normalized_embeddings.eval(session=sess)
+        if step % 20000 == 0:
+            result_Json(final_embeddings,reverse_dictionary,str(step))
+            outputimage()
 
 
+print("training closed")
 
-except ImportError:
-    print("Please install sklearn, matplotlib, and scipy to visualize embeddings.")
-
-
-
-
+outputimage()
 endtime = datetime.datetime.now()
 runtime=str((endtime-starttime).seconds)
 print("runtime(s): ",runtime)

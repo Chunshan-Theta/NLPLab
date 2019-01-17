@@ -1,0 +1,32 @@
+/*
+* @Author: gavin
+* @Date:   2019-01-15 04:15:36
+* @Last Modified by:   gavin
+* @Last Modified time: 2019-01-17 15:30:38
+*/
+a{
+	text-decoration: none;
+}
+
+.padding-32 {
+    padding: 32px!important;
+}
+.min_height{
+	min-height: 120px;
+}
+.text_content{
+	color: #000!important;
+	font-family: "Montserrat", sans-serif;
+	font-size: 15px;
+    line-height: 1.5;
+    margin:5px;
+}
+.text_title{
+	color: #000!important;
+	font-family: "Montserrat", sans-serif;
+	font-size: 25px;
+    line-height: 1.5;
+}
+.graypic{
+	filter: grayscale(100%) blur(2px);;
+}
