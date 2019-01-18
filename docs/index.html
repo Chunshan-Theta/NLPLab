@@ -9,8 +9,15 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
+
 <!-- CSS Files -->
 <link href="css/main.css" rel="stylesheet" />
+<link href="css/lightbox.css" rel="stylesheet">
+
+<!-- JS Files -->
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="js/lightbox.js"></script>
+
 <style>
 .w3-sidebar a {font-family: "Roboto", sans-serif}
 body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
@@ -26,21 +33,22 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
   <div class="w3-padding-64 w3-large w3-text-grey" style="font-weight:bold">
     <h3 class="w3-bar-item w3-wide w3-text-black" >outline</h3>
     <div id="outlinelink">
-    	<a href="#title" class="w3-bar-item w3-button">TiTle</a>
-    	<a href="#intro" class="w3-bar-item w3-button">Intro</a>
-    	<a href="#P1" class="w3-bar-item w3-button">P1: jieba</a>
+      <a href="#title" class="w3-bar-item w3-button">TiTle</a>
+      <a href="#intro" class="w3-bar-item w3-button">Intro</a>
+      <a href="#P1" class="w3-bar-item w3-button">P1: jieba</a>
+      <a href="#P2" class="w3-bar-item w3-button">P2: Word2Vec</a>
     
     </div>
-	<div id="contact" class="w3-margin-top">
-	    <a onclick="myAccFunc()" href="javascript:void(0)" class="w3-light-grey w3-button w3-block w3-white w3-left-align" id="myBtn">
-	      <i class="fa fa-caret-right w3-margin-right "></i>Contact <i class="fa fa-caret-left w3-margin-left"></i>
-	    </a>
-	    <div id="demoAcc" class="w3-bar-block w3-hide w3-padding-large w3-medium">
-	      <a href="//www.facebook.com/chunshan.wang/" class="w3-bar-item w3-button "><i class="fa fa-facebook w3-margin-right"></i> Facebook</a>
-	      <a href="//github.com/Chunshan-Theta/" class="w3-bar-item w3-button"><i class="fa fa-github w3-margin-right"></i> Github</a>
-	      <a href="//studentcodebank.wordpress.com" class="w3-bar-item w3-button"><i class="fa fa-home w3-margin-right"></i> Blog</a>
-	      <a href="#aboutMe" class="w3-bar-item w3-button"><i class="fa fa-user w3-margin-right"></i> About Me</a>
-	    </div>
+  <div id="contact" class="w3-margin-top">
+      <a onclick="myAccFunc()" href="javascript:void(0)" class="w3-light-grey w3-button w3-block w3-white w3-left-align" id="myBtn">
+        <i class="fa fa-caret-right w3-margin-right "></i>Contact <i class="fa fa-caret-left w3-margin-left"></i>
+      </a>
+      <div id="demoAcc" class="w3-bar-block w3-hide w3-padding-large w3-medium">
+        <a href="//www.facebook.com/chunshan.wang/" class="w3-bar-item w3-button "><i class="fa fa-facebook w3-margin-right"></i> Facebook</a>
+        <a href="//github.com/Chunshan-Theta/" class="w3-bar-item w3-button"><i class="fa fa-github w3-margin-right"></i> Github</a>
+        <a href="//studentcodebank.wordpress.com" class="w3-bar-item w3-button"><i class="fa fa-home w3-margin-right"></i> Blog</a>
+        <a href="#aboutMe" class="w3-bar-item w3-button"><i class="fa fa-user w3-margin-right"></i> About Me</a>
+      </div>
     </div>
 
 
@@ -65,8 +73,8 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
   
   <!-- Top header -->
   <header class="w3-container w3-xlarge">
-  	<p class="w3-left"></p>
-  	<!--
+    <p class="w3-left"></p>
+    <!--
     <p class="w3-left">Jeans</p>
     <p class="w3-right">
       <i class="fa fa-shopping-cart w3-margin-right"></i>
@@ -77,7 +85,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- Image header -->
   <div id="title" class="w3-display-container w3-container">
-    <img src="top.jpg" alt="Jeans" class="graypic" style="width:100%">
+    <img src="top.png" alt="Jeans" class="graypic" style="width:100%">
     <div class="w3-display-topleft w3-text-white" style="padding:24px 48px">
       <h1 class="w3-jumbo w3-hide-small">NLP LAB</h1>
       <h1 class="w3-hide-large w3-hide-medium">NLP LAB</h1>
@@ -92,12 +100,12 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- intro section -->
   <div id="intro" class="w3-row w3-grayscale w3-padding-16">
-  	<div class="w3-col l6 s6" >
+    <div class="w3-col l6 s6" >
 
       <div class="w3-container text_content w3-margin">
 
-  		<b class="w3-text-grey">Intro Project</b>
-      	<p>Implemented Topic :</p>
+      <b class="w3-text-grey">Intro Project</b>
+        <p>Implemented Topic :</p>
         <li>jieba for tradition Chiness</li>
         <li>Website Crawler</li>
         <li>word2vec</li>
@@ -108,12 +116,12 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
         <li>jieba</li>
         <li>jieba.analysis</li>
         <li>requests</li>
-	  </div>
+    </div>
       
     </div>
 
-  	<div class="w3-col l6 s6" >
-      <div class="w3-container">	
+    <div class="w3-col l6 s6" >
+      <div class="w3-container">  
         <div class="w3-display-container padding-32">
           <span class="w3-tag">Word2Vec</span>
           <img src="word2vec.png" class="" style="width:100%">
@@ -130,30 +138,115 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- Part 1 section -->
   <div id="P1" class="w3-row w3-grayscale w3-padding-16">
-  	<div class="w3-col l6 s6" >
+    <div class="w3-col l6 s6" >
 
       <div class="w3-container text_content w3-margin">
 
-  		<b class="w3-text-grey">jieba for tradition Chiness</b>
-      	
-	  </div>
+      <b class="w3-text-grey">jieba for tradition Chiness</b>
+        
+    </div>
       
     </div>
 
-  	<div class="w3-col l6 s6" >
-      <div class="w3-container">	
+    <div class="w3-col l6 s6" >
+      <div class="w3-container">  
         <div class="w3-display-container padding-32">
-          <span class="w3-tag">Word2Vec</span>
-          <img src="word2vec.png" class="" style="width:100%">
           
-          <div class="w3-display-middle w3-display-hover">
-            <a href="https://github.com/Chunshan-Theta/NLPLab" class="w3-button w3-black">go to Github<i class="fa fa-github"></i></a>
-          </div>
+          
+           <a href="./word2vec.png" data-lightbox="word2vec" data-title="word2vec">
+            <span class="w3-tag">Word2Vec</span>
+            <img src="word2vec.png" class="" style="width:100%">
+          </a>
         </div>
       </div>
       
     </div>
 
+  </div>
+  <!-- Part 2 section -->
+  <div id="P2" class="w3-row w3-padding-16">
+    <div class="w3-col l6 s6" >
+
+      <div class="w3-container text_content w3-margin">
+
+      <b class="w3-text-grey">Word2vec</b>
+      <pre class="text_content">
+        
+        1. loading the train data
+          &gt;  loading stop words ( word2vec/stop_words.txt.py )
+          &gt;  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
+
+          the main step:
+          * clear special character:only chinese
+          * simplified to treditional (../nstools/)
+
+        2. Build the dictionary and replace rare words with UNKNOWWORD token.
+          &gt;  Build the dictionary
+          &gt;  rare words processed
+          
+          the main step:
+          * Setting the size of the word set for the training model
+          * using function: collections.Counter().most_common()
+        3. Function to generate a training batch for the skip-gram model.
+        4. Build and train a skip-gram model.
+          &gt; Loss: tf.nn.nce_loss()
+          &gt; Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
+        5. Begin training
+          &gt; training stage
+          &gt; TensorBoard (will output to word2vec/TB/)
+          &gt; output to Json txt file :result_Json
+        
+      </pre>
+        
+    </div>
+      
+    </div>
+
+    <div class="w3-col l6 s6" >
+      <div class="w3-container">  
+        <div class="w3-display-container padding-32">
+          
+
+          <a href="./word2vecgraph.png" data-lightbox="word2vecgraph" data-title="word2vec Graph">
+            <span class="w3-tag">Graph</span>
+            <img src="word2vecgraph.png" class="" style="width:100%">
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
+
+  </div>
+  <div id="P2_picset" class="w3-row w3-padding-16">
+
+    <div class="w3-col l6 s6" >
+      <div class="w3-container">  
+        <div class="w3-display-container padding-32">
+          
+          
+          <a href="./word2vecloss1.png" data-lightbox="word2vecloss1" data-title="word2vec loss 1">
+            <span class="w3-tag">loss start</span>
+            <img src="word2vecloss1.png" class="" style="width:100%">
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
+    <div class="w3-col l6 s6" >
+      <div class="w3-container">  
+        <div class="w3-display-container padding-32">
+          
+          <a href="./word2vecloss2.png" data-lightbox="word2vecloss2" data-title="word2vec loss 2">
+            <span class="w3-tag">loss end</span>
+            <img src="word2vecloss2.png" class="" style="width:100%">
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
   </div>
 
 
@@ -162,27 +255,27 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
     
     <h1>About me</h1>
     <div class="w3-row ">
-	  	<div class="w3-col l6 s6" >
+      <div class="w3-col l6 s6" >
 
-	      <div class="w3-container text_content">
-	  		
-	      	<b class="text_title">王君善 Gavin Wang </b>
+        <div class="w3-container text_content">
+        
+          <b class="text_title">王君善 Gavin Wang </b>
 
-	        <p>目前我已有四年的網頁與機器學習應用系統之建置經驗，同時透過經驗分享和需求訪談，我已經幫助許多團隊進行資訊技術諮詢並引進新穎的科技技術。 以Python和Node.js為基礎的網路服務建置為我主要專研方向。</p>
-		  </div>
-	      
-	    </div>
+          <p>目前我已有四年的網頁與機器學習應用系統之建置經驗，同時透過經驗分享和需求訪談，我已經幫助許多團隊進行資訊技術諮詢並引進新穎的科技技術。 以Python和Node.js為基礎的網路服務建置為我主要專研方向。</p>
+      </div>
+        
+      </div>
 
-	  	<div class="w3-col l6 s6" >
-	      <div class="w3-container">	
-		        <div class="w3-display-container hi_padding_big">
-		          <span class="w3-tag w3-display-bottomright">Gavin Wang</span>
-		          <img src="Gavin.png" class="" style="width:100%">
-		        </div>
-	      </div>
-	    </div>
+      <div class="w3-col l6 s6" >
+        <div class="w3-container">  
+            <div class="w3-display-container hi_padding_big">
+              <span class="w3-tag w3-display-bottomright">Gavin Wang</span>
+              <img src="Gavin.png" class="" style="width:100%">
+            </div>
+        </div>
+      </div>
     
-  	</div>
+    </div>
   </div>
   
   <!-- Footer -->
@@ -234,6 +327,8 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
     </div>
   </div>
 </div>
+
+
 
 <script>
 // Accordion 

@@ -2,7 +2,7 @@
 * @Author: gavin
 * @Date:   2019-01-15 04:15:36
 * @Last Modified by:   gavin
-* @Last Modified time: 2019-01-17 15:30:38
+* @Last Modified time: 2019-01-18 10:44:08
 */
 a{
 	text-decoration: none;
@@ -20,6 +20,7 @@ a{
 	font-size: 15px;
     line-height: 1.5;
     margin:5px;
+    overflow: auto;
 }
 .text_title{
 	color: #000!important;
