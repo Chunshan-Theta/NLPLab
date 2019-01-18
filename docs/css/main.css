@@ -29,5 +29,5 @@ a{
     line-height: 1.5;
 }
 .graypic{
-	filter: grayscale(100%) blur(2px);;
+	filter: grayscale(100%) opacity(30%);
 }
