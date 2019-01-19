@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>Gavin Pages</title>
+<title>繁體中文自然語言理解訓練文件</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -36,8 +36,9 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
       <a href="#title" class="w3-bar-item w3-button">TiTle</a>
       <a href="#intro" class="w3-bar-item w3-button">Intro</a>
       <a href="#P1" class="w3-bar-item w3-button">P1: jieba</a>
-      <a href="#P2" class="w3-bar-item w3-button">P2: Word2Vec</a>
-    
+      <a href="#P2" class="w3-bar-item w3-button">P2: Website Crawler</a>
+      <a href="#P3" class="w3-bar-item w3-button">P3: Word2Vec</a>
+
     </div>
   <div id="contact" class="w3-margin-top">
       <a onclick="myAccFunc()" href="javascript:void(0)" class="w3-light-grey w3-button w3-block w3-white w3-left-align" id="myBtn">
@@ -53,7 +54,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
 
   </div>
-  
+
 </nav>
 
 <!-- Top menu on small screens -->
@@ -70,7 +71,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- Push down content on small screens -->
   <div class="w3-hide-large" style="margin-top:83px"></div>
-  
+
   <!-- Top header -->
   <header class="w3-container w3-xlarge">
     <p class="w3-left"></p>
@@ -91,9 +92,9 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
       <h1 class="w3-hide-large w3-hide-medium">NLP LAB</h1>
 
       <h3>I try to build NLP service in Chinese<br> and here is the training core.</h3>
-      
+
       <h3 class="w3-hide-small">Hoster,Gavin</h3>
-      
+
     </div>
   </div>
 
@@ -104,184 +105,252 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
       <div class="w3-container text_content w3-margin">
 
-      <b class="w3-text-grey">Intro Project</b>
+        <b class="w3-text-grey">Intro Project</b>
+        <p>專案主旨為台灣繁體中文建置自然語言理解之服務，以下介紹大致內容</p>
         <p>Implemented Topic :</p>
-        <li>jieba for tradition Chiness</li>
-        <li>Website Crawler</li>
-        <li>word2vec</li>
-        <li>sentiment</li>
+        <li>為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙 - jieba for tradition Chiness</li>
+        <li>透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler</li>
+        <li>修改word2vec以適用中文訓練 - word2vec</li>
+        <li>情感分析之實作 - sentiment analysis</li>
 
         <p>Main Package :</p>
         <li>TensorFlow</li>
         <li>jieba</li>
         <li>jieba.analysis</li>
         <li>requests</li>
-    </div>
-      
+      </div>
+
     </div>
 
     <div class="w3-col l6 s12" >
-      <div class="w3-container">  
+      <div class="w3-container">
         <div class="w3-display-container padding-32">
           <span class="w3-tag">Word2Vec</span>
           <img src="word2vec.png" class="" style="width:100%">
-          
+
           <div class="w3-display-middle w3-display-hover">
             <a href="https://github.com/Chunshan-Theta/NLPLab" class="w3-button w3-black">go to Github<i class="fa fa-github"></i></a>
           </div>
         </div>
       </div>
-      
+
     </div>
 
   </div>
 
   <!-- Part 1 section -->
-  <div id="P1" class="w3-row w3-grayscale w3-padding-16">
+  <div id="P1" class="w3-row  w3-padding-16">
     <div class="w3-col l6 s12" >
 
       <div class="w3-container text_content w3-margin">
 
-      <b class="w3-text-grey">jieba for tradition Chiness</b>
-        
-    </div>
-      
+        <b class="w3-text-grey">為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙 - jieba for tradition Chiness</b>
+        <p>這個主題旨在是在匯入台灣當地字詞，並調用jieba.lcut(sentence)、jieba.analyse.tfidf()和jieba.analyse.textrank()</p>
+        <pre class="text_content">
+          0. 調用服務實例
+            > NLPLab/jiebaService.py
+
+          以下紀錄重點工作；
+
+          1. 調整預設自設字典 並 匯入台灣字詞
+            > 在 NLPLab/jieba_zn/jieba/__init__.py 調整 "DEFAULT_DICT_NAME" 變數
+            > 在 NLPLab/jieba_zn/jieba/__init__.py 調用 "dt.load_userdict(get_module_res('tw.dict.all'))" 方法
+
+          2. 調整路徑
+            > 由於最初下載時部分程式並為相對路徑，故稍作修正。
+
+          3. 结巴中文分词來源: https://github.com/fxsjy/jieba
+
+
+        </pre>
+      </div>
+
     </div>
 
-    <div class="w3-col l6 s12" >
-      <div class="w3-container">  
+    <div id="P1_pic" class="w3-col l6 s12" >
+      <div class="w3-container">
         <div class="w3-display-container padding-32">
-          
-          
            <a href="./word2vec.png" data-lightbox="word2vec" data-title="word2vec">
-            <span class="w3-tag">Word2Vec</span>
-            <img src="word2vec.png" class="" style="width:100%">
+            <span class="w3-tag w3-grayscale">Word2Vec</span>
+            <img src="top.png" class="w3-" style="width:100%">
           </a>
         </div>
       </div>
-      
+    </div>
+  </div>
+
+  <!-- Part 2 section -->
+  <div id="P2" class="w3-row  w3-padding-16">
+    <div class="w3-col l6 s12" >
+
+      <div class="w3-container text_content w3-margin">
+
+        <b class="w3-text-grey">透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler</b>
+        <p>這個主題旨在是在蒐集訓練所需要的資料來源、分類與轉成繁體。</p>
+        <pre class="text_content">
+
+          1. 於booking.com取得約34萬則正負面評價
+            >  這個部分主要使用 selenium 進行爬蟲
+            >  先使用 NLPLab/Crawler/CrawlerToBooking/crawler_selenium-GetUrl.py 蒐集台灣各飯店的id
+            >  在使用 NLPLab/Crawler/CrawlerToBooking/crawler_selenium-GetContent.py 分類整理正負面評價
+
+          2. 於scitechvista.nat.gov.tw取得2000多篇科學專刊
+          >  這個部分主要使用 selenium 進行爬蟲
+          >  先使用 NLPLab/Crawler/CrawlerForScitechvista/crawler_selenium-GetUrl.py 蒐集科學文章的各個連結
+          >  在使用 NLPLab/Crawler/CrawlerForScitechvista/crawler_selenium-GetContent.py 爬下內容儲存
+
+          3. 於wiki取得中文文章約70000篇 - 參考來源 (https://github.com/Alex-CHUN-YU/Word2vec)
+
+            > 主要以 pages-articles.xml.bz2 結尾之檔案類型，這邊使用 zhwiki-latest-pages-articles.xml.bz2。
+            > 維基資料集:
+              https://zh.wikipedia.org/wiki/Wikipedia:%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8B%E8%BD%BD
+
+            > zhwiki-latest-pages-articles.xml.bz2 下載網址:
+              https://drive.google.com/file/d/0B4rlWa2S_JMBUmlMSG5IRVRMbnc/view?usp=sharing
+
+            > 程式參考網址:
+              https://radimrehurek.com/gensim/corpora/wikicorpus.html
+              https://radimrehurek.com/gensim/models/word2vec.html
+
+          4. 轉簡體為繁體
+            >  這個部分主要使用 NLPLab/nstools/ 進行轉換
+            >  工具來源: https://github.com/skydark/nstools
+
+        </pre>
+      </div>
+
     </div>
 
+    <div id="P2_pic" class="w3-col l6 s12" >
+      <div class="w3-container">
+        <div class="w3-display-container padding-32">
+           <a href="./word2vec.png" data-lightbox="word2vec" data-title="word2vec">
+            <span class="w3-tag w3-grayscale">Word2Vec</span>
+            <img src="top.png" class="w3-" style="width:100%">
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
-  <!-- Part 2 section -->
-  <div id="P2" class="w3-row w3-padding-16">
+  <!-- Part 3 section -->
+  <div id="P3" class="w3-row w3-padding-16">
     <div class="w3-col l6 s12" >
 
       <div class="w3-container text_content w3-margin">
 
       <b class="w3-text-grey">Word2vec</b>
       <pre class="text_content">
-        
+
         1. loading the train data
-          &gt;  loading stop words ( word2vec/stop_words.txt.py )
-          &gt;  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
+          >  loading stop words ( word2vec/stop_words.txt.py )
+          >  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
 
           the main step:
           * clear special character:only chinese
           * simplified to treditional (../nstools/)
 
         2. Build the dictionary and replace rare words with UNKNOWWORD token.
-          &gt;  Build the dictionary
-          &gt;  rare words processed
-          
+          >  Build the dictionary
+          >  rare words processed
+
           the main step:
           * Setting the size of the word set for the training model
           * using function: collections.Counter().most_common()
         3. Function to generate a training batch for the skip-gram model.
         4. Build and train a skip-gram model.
-          &gt; Loss: tf.nn.nce_loss()
-          &gt; Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
+          > Loss: tf.nn.nce_loss()
+          > Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
         5. Begin training
-          &gt; training stage
-          &gt; TensorBoard (will output to word2vec/TB/)
-          &gt; output to Json txt file :result_Json
-        
+          > training stage
+          > TensorBoard (will output to word2vec/TB/)
+          > output to Json txt file :result_Json
+
       </pre>
-        
+
     </div>
-      
+
     </div>
 
     <div class="w3-col l6 s12" >
-      <div class="w3-container">  
+      <div class="w3-container">
         <div class="w3-display-container padding-32">
-          
+
 
           <a href="./word2vecgraph.png" data-lightbox="word2vecgraph" data-title="word2vec Graph">
             <span class="w3-tag">Graph</span>
             <img src="word2vecgraph.png" class="" style="width:100%">
           </a>
-          
+
         </div>
       </div>
-      
+
     </div>
 
   </div>
-  <div id="P2_picset" class="w3-row w3-padding-16">
+  <div id="P3_picset" class="w3-row w3-padding-16">
 
     <div class="w3-col l6 s12" >
-      <div class="w3-container">  
+      <div class="w3-container">
         <div class="w3-display-container padding-32">
-          
-          
+
+
           <a href="./word2vecloss1.png" data-lightbox="word2vecloss1" data-title="word2vec loss 1">
             <span class="w3-tag">loss start</span>
             <img src="word2vecloss1.png" class="" style="width:100%">
           </a>
-          
+
         </div>
       </div>
-      
+
     </div>
     <div class="w3-col l6 s12" >
-      <div class="w3-container">  
+      <div class="w3-container">
         <div class="w3-display-container padding-32">
-          
+
           <a href="./word2vecloss2.png" data-lightbox="word2vecloss2" data-title="word2vec loss 2">
             <span class="w3-tag">loss end</span>
             <img src="word2vecloss2.png" class="" style="width:100%">
           </a>
-          
+
         </div>
       </div>
-      
+
     </div>
   </div>
 
 
   <!-- Subscribe section -->
   <div id="aboutMe" class="w3-container w3-light-grey w3-padding-32">
-    
+
     <h1>About me</h1>
     <div class="w3-row ">
       <div class="w3-col l6 s12" >
 
         <div class="w3-container text_content">
-        
+
           <b class="text_title">王君善 Gavin Wang </b>
 
           <p>目前我已有四年的網頁與機器學習應用系統之建置經驗，同時透過經驗分享和需求訪談，我已經幫助許多團隊進行資訊技術諮詢並引進新穎的科技技術。 以Python和Node.js為基礎的網路服務建置為我主要專研方向。</p>
       </div>
-        
+
       </div>
 
       <div class="w3-col l6 s12" >
-        <div class="w3-container">  
+        <div class="w3-container">
             <div class="w3-display-container hi_padding_big">
               <span class="w3-tag w3-display-bottomright">Gavin Wang</span>
               <img src="Gavin.png" class="" style="width:100%">
             </div>
         </div>
       </div>
-    
+
     </div>
   </div>
-  
+
   <!-- Footer -->
   <footer class="w3-padding-64 w3-light-grey w3-small w3-center" id="footer">
     <div class="w3-row-padding">
-     
+
 
       <div class="w3-col s12 l6 w3-justify">
         <h4>education</h4>
@@ -289,7 +358,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
         <p>國立中央大學 網路學習科技研究所</p>
         <a href="//www.cakeresume.com/wang-chunshan">Online Resume: https://www.cakeresume.com/wang-chunshan</a>
 
- 
+
       </div>
 
       <div class="w3-col s12 l6 w3-justify">
@@ -297,12 +366,12 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
         <p><i class="fa fa-fw fa-phone"></i> 0910365567</p>
         <p><i class="fa fa-fw fa-envelope"></i> gavin19950511@gmail.com</p>
         <h4>social network</h4>
-        
+
         <p><a href="//www.facebook.com/chunshan.wang/" ><i class="fa fa-fw fa-facebook"></i>https://www.facebook.com/chunshan.wang/</a></p>
         <p><a href="//www.linkedin.com/in/thetawang/" ><i class="fa fa-fw fa-linkedin"></i>https://www.linkedin.com/in/thetawang/</a></p>
         <p><a href="//github.com/Chunshan-Theta" ><i class="fa fa-fw fa-github"></i>https://www.facebook.com/chunshan.wang/</a></p>
-        
-        
+
+
       </div>
     </div>
   </footer>
@@ -331,7 +400,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
 
 <script>
-// Accordion 
+// Accordion
 function myAccFunc() {
     var x = document.getElementById("demoAcc");
     if (x.className.indexOf("w3-show") == -1) {
@@ -340,17 +409,14 @@ function myAccFunc() {
         x.className = x.className.replace(" w3-show", "");
     }
 }
-
 // Click on the "Jeans" link on page load to open the accordion for demo purposes
 //document.getElementById("myBtn").click();
-
-
 // Script to open and close sidebar
 function w3_open() {
     document.getElementById("mySidebar").style.display = "block";
     document.getElementById("myOverlay").style.display = "block";
 }
- 
+
 function w3_close() {
     document.getElementById("mySidebar").style.display = "none";
     document.getElementById("myOverlay").style.display = "none";
