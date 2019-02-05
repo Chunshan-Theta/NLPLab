@@ -58,8 +58,8 @@ assert type(wordVectors.shape) is tuple
 baseballIndex = wordsList.index('baseball')
 print(wordVectors[baseballIndex])
 '''
-#logging.debug("資料 vec: "+str(wordVectors[wordsList.index(unicode("資料","utf-8"))]))
-logging.debug("資料 vec: "+str(wordVectors[wordsList.index("資料")]))
+logging.debug("向量 -> "+str(wordVectors[wordsList.index("資料")]))
+
 
 '''
 #Step 2.01: Example for build embeddings structure of the sentence.
@@ -87,6 +87,9 @@ with tf.Session() as sess:
     print(tf.nn.embedding_lookup(wordVectors,firstSentence).eval().shape)
 '''
 
+
+
+'''
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
@@ -96,19 +99,24 @@ with tf.Session() as sess:
 positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
 negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
 numWords = []
+
 for pf in positiveFiles:
     with open(pf, "r", encoding='utf-8') as f:
-        line=f.readline()
-        #counter = len(line.split())
-        counter = len(jieba.lcut(line))
+        logging.info(str(pf))
+        linearray = f.readlines()
+        line= "".join(linearray)
+        counter = len(SentencesCuter(line))
+        
         numWords.append(counter)
 logging.info('Positive files finished')
 
+
 for nf in negativeFiles:
     with open(nf, "r", encoding='utf-8') as f:
-        line=f.readline()
-        #counter = len(line.split())
-        counter = len(jieba.lcut(line))
+        logging.info(str(nf))
+        linearray = f.readlines()
+        line= "".join(linearray)
+        counter = len(SentencesCuter(line))
         numWords.append(counter)
 logging.info('Negative files finished')
 
@@ -116,67 +124,78 @@ numFiles = len(numWords)
 logging.info('The total number of files is '+str(numFiles))
 logging.info('The total number of words in the files is '+str(sum(numWords)))
 logging.info('The average number of words in the files is '+str(sum(numWords)/len(numWords)))
-maxSeqLength = 50
+maxSeqLength = 35
 
 
 #Step 2.2: convert words of the sentence to vector and insert to structure.
-#Removes punctuation, parentheses, question marks, etc., and leaves only alphanumeric characters.
-def cleanSentences(content):
-    content = content.replace(" ", "") #remove space
-    content = re.sub("[A-Za-z0-9]+", "", content) # remove English and number
-    content = re.sub("[/.~?=,]+", "", content) # remove Any character symbols
-    return jieba.lcut(content)
 
-ids = np.zeros((numFiles, maxSeqLength), dtype='int32')
+
+ids = np.zeros((numFiles, maxSeqLength), dtype='float32')
 fileCounter = 0
+len_positiveFiles =len(positiveFiles)
+len_negativeFiles =len(negativeFiles)
+
 logging.info("positiveFiles length: "+str(len(positiveFiles)))
 logging.info("negativeFiles length: "+str(len(negativeFiles)))
 for pf in positiveFiles:
+   logging.debug(pf)
    with open(pf, "r") as f:
        indexCounter = 0
-       line=f.readline()
-       #cleanedLine = cleanSentences(line)
-       #split = cleanedLine.split()
-       split = cleanSentences(line)
+       linearray = f.readlines()
+       line= "".join(linearray)
+       
+       logging.debug(line)
+       split = SentencesCuter(line)
+       logging.debug(split)
        if len(split)<4:#ignoring the file if length don't fit to training
-           break
+           continue
+       
        for word in split:
+           
+               
            try:
-               if len(word)<=1:
-                   raise ValueError("ignore mean-less words")
-               else:
-                   ids[fileCounter][indexCounter] = wordsList.index(word)
+               
+               ids[fileCounter][indexCounter] = wordsList.index(word)
+               
+      
            except ValueError:
-               ids[fileCounter][indexCounter] = finWord-1 #Vector for unkown words
+               logging.debug("ignored: ",word)
+               ids[fileCounter][indexCounter] = 0
+           
            indexCounter = indexCounter + 1
            if indexCounter >= maxSeqLength :#ignoring continue string if length don't fit to training.
                break
+       print(fileCounter,'/',len_positiveFiles)
        fileCounter = fileCounter + 1
 
 for nf in negativeFiles:
+   logging.debug(nf)
    with open(nf, "r") as f:
        indexCounter = 0
-       line=f.readline()
-       #cleanedLine = cleanSentences(line)
-       #split = cleanedLine.split()
-       split = cleanSentences(line)
+       linearray = f.readlines()
+       line= "".join(linearray)
+       split = SentencesCuter(line)
+       logging.debug(split)
        if len(split)<4:#ignoring the file if length don't fit to training
-           break
+           continue
+       
        for word in split:
            try:
-               if len(word)<=1:
-                   raise ValueError("ignore mean-less words")
-               else:
-                   ids[fileCounter][indexCounter] = wordsList.index(word)
+               
+               ids[fileCounter][indexCounter] = wordsList.index(word)
+      
            except ValueError:
-               ids[fileCounter][indexCounter] = finWord-1 #Vector for unkown words
+               logging.debug("ignored: ",word)
+               ids[fileCounter][indexCounter] = 0
            indexCounter = indexCounter + 1
            if indexCounter >= maxSeqLength:#ignoring continue string it if length don't fit to training.
                break
+   
+       print(fileCounter,'/',(len_negativeFiles+len_positiveFiles))
        fileCounter = fileCounter + 1
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
-
+'''
 
 
 
@@ -187,11 +206,11 @@ ids = np.load('idsMatrix.npy')
 
 #Step3.2: defind config for training
 
-batchSize = 24
-lstmUnits = 64
+batchSize = 100*20
+lstmUnits = 256
 numClasses = 2
-iterations = 100*1000   #300000 = 1 hr
-maxSeqLength = 50
+iterations = 100001
+maxSeqLength = 35
 numDimensions = 300
 
 positiveFilesCount = len(listdir('positiveReviews/'))#5251
@@ -209,77 +228,25 @@ def getTrainBatch():
         else:#negative
             num = randint(int(positiveFilesCount+testRange),int(positiveFilesCount+negativeFilesCount-1))
             labels.append([0,1])
-        logging.debug(str(num))
+        
         arr[i] = ids[num-1:num]
+
 
     return arr, labels
 
-def getTestBatch(type='default'):
-    if type=="coArgu":
-
-        arr=[]
-        labels = []
-        p=["我同意",
-        "你說的沒錯",
-        "我同意很好",
-        "我認為我們的共識是正確的",
-        "妳的論述很合理",
-        "我認同你的論點",
-        "你說的很好",
-        "我認為你的推論很正確有很多證據可以證明你的論點",
-        "我相信妳的推論聽起來很有道理",
-        "你說的是正確的的確證據是顯示出這樣的情況",
-        "妳的說法還有一些漏洞但我大致上認同你的論述",
-        "妳說的怪怪的但大致上你的論述還算合理"]
-
-        n = ["我不同意",
-        "你說的並不正確",
-        "我不同意你的看法",
-        "我們目前還沒有共識",
-        "你說的部分有點問題",
-        "妳的論述並不合理",
-        "我沒辦法認同你的論點",
-        "我認為你的推論很不正確除非我有看到更多的證據來判斷",
-        "我沒辦法相信妳的推論除非妳有更多的證據可以證明",
-        "你說的是錯誤的的確證據並沒有顯示出這樣的情況",
-        "你說的聽起來很有道理但我們應該要拿出證據說話",
-        "我能夠體會妳的想法但我認為其中有些問題"]
-        for s in p:
-            unitSentence = np.zeros((maxSeqLength), dtype='int32')
-            sl = jieba.lcut(s)
-            for w_idx in range(len(sl)):
-                if sl[w_idx] in wordsList:
-                    unitSentence[w_idx] = wordsList.index(sl[w_idx])
-                else:
-                    unitSentence[w_idx] = finWord-1
-            arr.append(unitSentence)
+def getTestBatch():
+    testRange = testingFilesCount/2
+    labels = []
+    arr = np.zeros([batchSize, maxSeqLength])
+    for i in range(batchSize):
+        num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
+        if (num <= positiveFilesCount):
             labels.append([1,0])
-        for s in n:
-            unitSentence = np.zeros((maxSeqLength), dtype='int32')
-            sl = jieba.lcut(s)
-            for w_idx in range(len(sl)):
-                if sl[w_idx] in wordsList:
-                    unitSentence[w_idx] = wordsList.index(sl[w_idx])
-                else:
-                    unitSentence[w_idx] = finWord-1
-            arr.append(unitSentence)
+        else:
             labels.append([0,1])
-        return arr, labels
-
-    elif type=='default':
-        testRange = testingFilesCount/2
-        labels = []
-        arr = np.zeros([batchSize, maxSeqLength])
-        for i in range(batchSize):
-            num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
-            if (num <= positiveFilesCount):
-                labels.append([1,0])
-            else:
-                labels.append([0,1])
-            arr[i] = ids[num-1:num]
-        return arr, labels
-    else:
-        raise ValueError("undefined type")
+        arr[i] = ids[num-1:num]
+    return arr, labels
+    
 
 
 tf.reset_default_graph()
@@ -297,68 +264,56 @@ with tf.name_scope('Embeddings'):
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
     lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
-
+    #lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=1.0, output_keep_prob=0.75)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.25)
     data = tf.cast(data,tf.float32)
-    rnn_out, state = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
+    #value
+    rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
     tf.summary.histogram('rnn_out', rnn_out)
-'''
-with tf.name_scope('hidden1'):
-    value = tf.transpose(rnn_out, [1, 0, 2])
-    rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
-    with tf.variable_scope('hidden1'):
-    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+
+with tf.name_scope('hidden'):
+    with tf.variable_scope('weight'):
         weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
-    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
+        #weight = tf.Variable(tf.random_normal([lstmUnits, numClasses]),name="weight")
+        tf.summary.histogram('weight', weight)
+        
 
-    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction)
-'''
-
-with tf.name_scope('hidden1'):
+    with tf.variable_scope('bias'):
+        #bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
+        bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
+        tf.summary.histogram('bias', bias)
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
-    with tf.variable_scope('hidden1'):
-        weight = tf.Variable(tf.truncated_normal([64, 32]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[32]),name="bias")
-    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    prediction_hidden1 = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    
+    prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
     #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
+    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    tf.summary.histogram('hid_out_for_prediction_hidden1', prediction_hidden1)
 
+with tf.name_scope('loss'):
+    #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
+    pass
 
-with tf.name_scope('hidden2'):
-    with tf.variable_scope('hidden2'):
-        weight = tf.Variable(tf.truncated_normal([32, 2]),name="weight")
-        bias = tf.Variable(tf.constant(0.1, shape=[2]),name="bias")
-    prediction = tf.nn.tanh(tf.add(tf.matmul(prediction_hidden1, weight),bias))
-    tf.summary.histogram('hid_out_for_prediction_hidden2', prediction)
-
+with tf.name_scope('optimizer'):
+    optimizer = tf.train.AdamOptimizer(learning_rate=1.0).minimize(loss)#learning_rate inital value is 0.001
+    #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
+    #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
+    pass
 
 with tf.name_scope('accuracy'):
     correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
     accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
 
-with tf.name_scope('loss'):
-    #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
-
-with tf.name_scope('optimize'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)#learning_rate inital value is 0.001
-    #optimizer = tf.train.AdagradOptimizer(learning_rate=0.001).minimize(loss)
-    #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
-    #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
 sess = tf.Session()
 
 #Step3.3: defind config for Tensorboard
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
-logdir = "tensorboard/H5_tanh_LR0001_" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
+logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
 writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
@@ -373,16 +328,18 @@ print("training process start")
 for i in range(iterations):
    #Next Batch of reviews
    nextBatch, nextBatchLabels = getTrainBatch()
-   sess.run(optimizer, {input_data: nextBatch, labels: nextBatchLabels})
-
+   logging.debug(nextBatch)
+   summary,stepLoss,_ = sess.run([merged,loss,optimizer], {input_data: nextBatch, labels: nextBatchLabels}) 
+   writer.add_summary(summary, i)
+   print(str(i),stepLoss,' (loss)')
    #Write summary to Tensorboard
    if (i % 50 == 0):
-       summary = sess.run(merged, {input_data: nextBatch, labels: nextBatchLabels})
-       writer.add_summary(summary, i)
-
-       #Accuracy
+       
+       #getTestBatch
        nextBatch, nextBatchLabels = getTestBatch()
-       print(str(i),"Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
+
+       summary,stepAccuracy = sess.run([merged,accuracy], {input_data: nextBatch, labels: nextBatchLabels}) 
+       print(str(i),"Accuracy:",stepAccuracy* 100,'%')
 
    #Save the network every 10,000 training iterations
    if (i % 10000 == 0 and i != 0):
@@ -392,64 +349,5 @@ for i in range(iterations):
 writer.close()
 
 
-'''
-#Step5.0: loading model
-
-sess = tf.InteractiveSession()
-saver = tf.train.Saver()
-saver.restore(sess, tf.train.latest_checkpoint('models'))
-'''
-
-'''
-#Step5.1: testing the model
-iterations = 10
-for i in range(iterations):
-    nextBatch, nextBatchLabels = getTestBatch();
-    print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
-'''
 
 
-'''
-#Step5.2: testing the model by string
-def testingSpeech(source):
-    source = source.replace(" ", "") #remove space
-    source = re.sub("[A-Za-z0-9]+", "", source) # remove English and number
-    source = re.sub("[/.~?=,]+", "", source) # remove Any character symbols
-    source_list = jieba.lcut(source)
-    Sentence = np.zeros((maxSeqLength), dtype='int32')
-    idx = 0
-    for i in source_list:
-        try:
-            if len(i)<=1:
-                Sentence[idx] =finWord-1
-            else:
-                Sentence[idx] = wordsList.index(unicode(i,"utf-8"))
-        except:
-            Sentence[idx] =finWord-1
-        idx+=1
-        if idx>=maxSeqLength:
-            break
-
-    input_data_Sentence = np.zeros((24,35))
-    input_data_Sentence[0] = Sentence
-    prediction_answer = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
-    prediction_answer = prediction_answer[0]
-    print(source)
-    if prediction_answer[0]>prediction_answer[1]:
-        print("good",prediction_answer[0]-prediction_answer[1])
-    else:
-        print("bad",prediction_answer[1]-prediction_answer[0])
-    print("-"*10)
-
-testingSpeech("[其他]  也有人們相對會提出：建造核廠的資金非常龐大，難道全都要由人民的血汗錢支出？說實在的，建造核廠所需的錢確實很多，但各位是否思考過，用火力發電，要燃燒石油煤碳與天然氣，現在的石油在數十年後就面臨枯竭的危機，那時購買原料的價錢就會變貴，因此，何不直接停止石化原料燃燒發電的方法，用費用較便宜的鈾料產生電力就好了呢？")
-testingSpeech("[提出疑問]  是阿~這就是剛才貼的東西寫的")
-testingSpeech("[其他]  看她漂亮啊")
-testingSpeech("[提出疑問]  你能不能舉例說明")
-testingSpeech("[提出疑問]  嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨嗨")
-testingSpeech("[提出疑問]  你能不能舉例說明關於核能對於環境破壞的可能性")
-testingSpeech("[提出疑問]  你能不能舉例說明關於國營企業 核能對於環境破壞的可能性")
-testingSpeech("[其他]  嗨")
-testingSpeech("[提出論點或證據]  不過基本上 這樣國營企業要倒掉民營化是很難的")
-testingSpeech("[其他]  你好友善 我旁邊感覺快吵起來惹哈哈哈")
-testingSpeech("[表達同意或支持]  我應該是同意吧")
-'''

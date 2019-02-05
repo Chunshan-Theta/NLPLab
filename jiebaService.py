@@ -12,7 +12,8 @@ sentence = "年底縣市長選舉進入倒數階段，這次高雄選情引人�
 words = pseg.cut(sentence)
 
 for word, flag in words:
-    print(word)
+    print(word,flag)
+
 
 '''
 sentence ：为待提取的文本

@@ -19,10 +19,10 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import datetime
 import re
-import logging
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import json
+import logging
 logging.basicConfig(level=logging.INFO)
 from langconv import *
 if not os.path.exists("TB"):
@@ -56,7 +56,9 @@ def read_data():
         logging.debug(str(len(raw_word_list))+'loading: '+str(path)+'/'+filename)
         with open(path+'/'+filename,"r") as f:#filter
             idx = 0
+            
             for line in f:
+                
                 #clear special character:only chinese
                 line = re.sub("[^\u4e00-\u9fff]", "", line)
 
@@ -270,8 +272,8 @@ with graph.as_default():
 
 
 def writeLog(name,text):
-    f = open("./NearestWord/"+name.encode('utf-8')+".txt","aw+")
-    f.write(text.encode('utf-8'))
+    f = open("./NearestWord/"+name+".txt","w")
+    f.write(text)
     f.write('\n')
     f.close()
 
@@ -283,7 +285,7 @@ def result_Json(final_embeddings,dictionary,idx=0,componentsNum =300,filename='i
     logging.debug(str(final_embeddings.shape))
     assert int(final_embeddings.shape[0])>int(componentsNum)
     idx = str(idx)
-    outputText="./output/outputWord2Vec(v"+str(componentsNum)+")("+idx+").txt"
+    outputText="./output/stopworddecrease_outputWord2Vec(v"+str(componentsNum)+")("+idx+").txt"
     #tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
     #low_dim_embs = tsne.fit_transform(final_embeddings)
     pca = PCA(n_components=int(componentsNum))
