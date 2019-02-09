@@ -87,8 +87,22 @@ with tf.Session() as sess:
     print(tf.nn.embedding_lookup(wordVectors,firstSentence).eval().shape)
 '''
 
+def SentencesCuter(source):
+    source = source.replace(" ", "") #remove space
+    #clear special character:only chinese
+    source = re.sub("[^\u4e00-\u9fff]", "", source)
+    words = pseg.cut(source)
+    re_lcut=[]
+    allowedtype=["n","v","ns","a","d","ad","x"]
+    for word, flag in words:
+        
+        if flag in allowedtype:
+            re_lcut.append(word)
+        else:
+            pass#print(word,flag)
 
-
+    #print("".join(re_lcut))
+    return re_lcut
 '''
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
@@ -255,9 +269,10 @@ tf.reset_default_graph()
 
 
 with tf.name_scope('Embeddings'):
+    lr = tf.placeholder(tf.float32)
     labels = tf.placeholder(tf.float32, [batchSize, numClasses])
     input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
-
+    
     data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]),dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVectors,input_data)
 
@@ -269,7 +284,7 @@ with tf.name_scope('rnn'):
     data = tf.cast(data,tf.float32)
     #value
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
-    tf.summary.histogram('rnn_out', rnn_out)
+    #tf.summary.histogram('rnn_out', rnn_out)
 
 with tf.name_scope('hidden'):
     with tf.variable_scope('weight'):
@@ -297,7 +312,7 @@ with tf.name_scope('loss'):
     pass
 
 with tf.name_scope('optimizer'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=1.0).minimize(loss)#learning_rate inital value is 0.001
+    optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)#learning_rate inital value is 0.001
     #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
     #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
     #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
@@ -326,14 +341,15 @@ sess.run(tf.global_variables_initializer())
 print("training process start")
 #Step4.1: training
 for i in range(iterations):
-   #Next Batch of reviews
-   nextBatch, nextBatchLabels = getTrainBatch()
-   logging.debug(nextBatch)
-   summary,stepLoss,_ = sess.run([merged,loss,optimizer], {input_data: nextBatch, labels: nextBatchLabels}) 
-   writer.add_summary(summary, i)
-   print(str(i),stepLoss,' (loss)')
-   #Write summary to Tensorboard
-   if (i % 50 == 0):
+    batch_lr =0.03   
+    #Next Batch of reviews
+    nextBatch, nextBatchLabels = getTrainBatch()
+    logging.debug(nextBatch)
+    summary,stepLoss,_ = sess.run([merged,loss,optimizer], {lr:batch_lr,input_data: nextBatch, labels: nextBatchLabels}) 
+    writer.add_summary(summary, i)
+    print(str(i),stepLoss,' (loss)')
+    #Write summary to Tensorboard
+    if (i % 50 == 0):
        
        #getTestBatch
        nextBatch, nextBatchLabels = getTestBatch()
@@ -341,8 +357,8 @@ for i in range(iterations):
        summary,stepAccuracy = sess.run([merged,accuracy], {input_data: nextBatch, labels: nextBatchLabels}) 
        print(str(i),"Accuracy:",stepAccuracy* 100,'%')
 
-   #Save the network every 10,000 training iterations
-   if (i % 10000 == 0 and i != 0):
+    #Save the network every 10,000 training iterations
+    if (i % 10000 == 0 and i != 0):
        save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
        print("saved to %s" % save_path)
 
