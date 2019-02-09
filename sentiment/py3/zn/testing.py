@@ -244,7 +244,7 @@ writer.close()
 
 sess = tf.InteractiveSession()
 saver = tf.train.Saver()
-saver.restore(sess, tf.train.latest_checkpoint('models'))
+saver.restore(sess, tf.train.latest_checkpoint('models_saved'))
 '''
 
 '''
@@ -265,9 +265,11 @@ def SentencesCuter(source):
     source = source.replace(" ", "") #remove space
     #clear special character:only chinese
     source = re.sub("[^\u4e00-\u9fff]", "", source)
+    source_list = jieba.lcut(source, cut_all=True)
+    source = "".join(source_list)
     words = pseg.cut(source)
     re_lcut=[]
-    allowedtype=["n","v","ns","a","d","ad","x"]
+    allowedtype=["n","v","vd","vn","ns","a","d","ad","an","x"]
     for word, flag in words:
         
         if flag in allowedtype:
@@ -285,10 +287,12 @@ def testingSpeech(source):
     source_list = SentencesCuter(source)
     Sentence = np.zeros((maxSeqLength), dtype='int32')
     idx = 0
+    validdwords=[]
     for i in source_list:
         try:
             Sentence[idx] = wordsList.index(i)
             logging.debug(i)
+            validdwords.append(i)
         except:
             pass#Sentence[idx] =0
         idx+=1
@@ -299,6 +303,7 @@ def testingSpeech(source):
     input_data_Sentence[0] = Sentence
     prediction_answer = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
     prediction_answer = prediction_answer[0]
+    print(''.join(validdwords))
     print(source)
     #print(prediction_answer)  
     print(prediction_answer[0]-prediction_answer[1]) 
@@ -345,23 +350,40 @@ n3 = [
   "我能夠體會妳的想法但我認為其中有些問題"]
 
 sum_v=0.0
+lossrate=0
+count=0
 for i in p1:
-    sum_v += testingSpeech(i)
-'''
+    v = testingSpeech(i)
+    sum_v += v
+    count+=1
+    if 1 > v:
+        lossrate+=1
+
 for i in p2:
-    sum_v += testingSpeech(i)
-for i in p3:
-    sum_v += testingSpeech(i)
-'''
-print("p",str(sum_v/12))
+    v = testingSpeech(i)
+    sum_v += v
+    count+=1
+    if 1 > v:
+        lossrate+=1
+print("p",str(sum_v/count),str(lossrate/count))
+
 
 sum_v=0.0
+rate=0
+count=0
 for i in n1:
-    sum_v += testingSpeech(i)
-'''
+    v = testingSpeech(i)
+    sum_v += v
+    count+=1
+    if v > 1.5:
+        lossrate+=1
+
 for i in n2:
-    sum_v += testingSpeech(i)
-for i in n3:
-    sum_v += testingSpeech(i)
-'''
-print("n",str(sum_v/12))
+    v = testingSpeech(i)
+    sum_v += v
+    count+=1
+    if v> 1.5:
+        lossrate+=1
+print("n",str(sum_v/count),str(lossrate/count))
+
+

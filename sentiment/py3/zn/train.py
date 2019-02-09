@@ -91,9 +91,11 @@ def SentencesCuter(source):
     source = source.replace(" ", "") #remove space
     #clear special character:only chinese
     source = re.sub("[^\u4e00-\u9fff]", "", source)
+    source_list = jieba.lcut(source, cut_all=True)
+    source = "".join(source_list)
     words = pseg.cut(source)
     re_lcut=[]
-    allowedtype=["n","v","ns","a","d","ad","x"]
+    allowedtype=["n","v","vd","vn","ns","a","d","ad","an","x"]
     for word, flag in words:
         
         if flag in allowedtype:
@@ -103,7 +105,8 @@ def SentencesCuter(source):
 
     #print("".join(re_lcut))
     return re_lcut
-'''
+
+
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
@@ -209,7 +212,7 @@ for nf in negativeFiles:
        fileCounter = fileCounter + 1
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
-'''
+
 
 
 
