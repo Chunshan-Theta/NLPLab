@@ -90,9 +90,9 @@ with tf.Session() as sess:
 def SentencesCuter(source):
     source = source.replace(" ", "") #remove space
     #clear special character:only chinese
-    source = re.sub("[^\u4e00-\u9fff]", "", source)
     source_list = jieba.lcut(source, cut_all=True)
     source = "".join(source_list)
+    source = re.sub("[^\u4e00-\u9fff]", "", source)
     words = pseg.cut(source)
     re_lcut=[]
     allowedtype=["n","v","vd","vn","ns","a","d","ad","an","x"]
@@ -106,7 +106,7 @@ def SentencesCuter(source):
     #print("".join(re_lcut))
     return re_lcut
 
-
+'''
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
@@ -177,7 +177,7 @@ for pf in positiveFiles:
       
            except ValueError:
                logging.debug("ignored: ",word)
-               ids[fileCounter][indexCounter] = 0
+               #ids[fileCounter][indexCounter] = 0
            
            indexCounter = indexCounter + 1
            if indexCounter >= maxSeqLength :#ignoring continue string if length don't fit to training.
@@ -203,7 +203,7 @@ for nf in negativeFiles:
       
            except ValueError:
                logging.debug("ignored: ",word)
-               ids[fileCounter][indexCounter] = 0
+               #ids[fileCounter][indexCounter] = 0
            indexCounter = indexCounter + 1
            if indexCounter >= maxSeqLength:#ignoring continue string it if length don't fit to training.
                break
@@ -213,7 +213,7 @@ for nf in negativeFiles:
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
 
-
+'''
 
 
 
@@ -272,12 +272,16 @@ tf.reset_default_graph()
 
 
 with tf.name_scope('Embeddings'):
-    lr = tf.placeholder(tf.float32)
+    step = tf.placeholder(tf.int32)
     labels = tf.placeholder(tf.float32, [batchSize, numClasses])
     input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
     
     data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]),dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVectors,input_data)
+    learning_rate = tf.train.exponential_decay(learning_rate=0.03,
+                                               global_step=step,
+                                               decay_steps=50,
+                                               decay_rate=0.9)
 
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
@@ -315,7 +319,8 @@ with tf.name_scope('loss'):
     pass
 
 with tf.name_scope('optimizer'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)#learning_rate inital value is 0.001
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    #optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)#learning_rate inital value is 0.001
     #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
     #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
     #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
@@ -344,14 +349,15 @@ sess.run(tf.global_variables_initializer())
 print("training process start")
 #Step4.1: training
 for i in range(iterations):
-    batch_lr =0.03   
+      
     #Next Batch of reviews
     nextBatch, nextBatchLabels = getTrainBatch()
     logging.debug(nextBatch)
-    summary,stepLoss,_ = sess.run([merged,loss,optimizer], {lr:batch_lr,input_data: nextBatch, labels: nextBatchLabels}) 
+    summary,stepLoss,_ = sess.run([merged,loss,optimizer], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
+    #Write summary to Tensorboard
     writer.add_summary(summary, i)
     print(str(i),stepLoss,' (loss)')
-    #Write summary to Tensorboard
+    
     if (i % 50 == 0):
        
        #getTestBatch
@@ -359,7 +365,7 @@ for i in range(iterations):
 
        summary,stepAccuracy = sess.run([merged,accuracy], {input_data: nextBatch, labels: nextBatchLabels}) 
        print(str(i),"Accuracy:",stepAccuracy* 100,'%')
-
+    
     #Save the network every 10,000 training iterations
     if (i % 10000 == 0 and i != 0):
        save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
