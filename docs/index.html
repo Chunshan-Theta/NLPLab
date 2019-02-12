@@ -38,6 +38,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
       <a href="#P1" class="w3-bar-item w3-button">P1: jieba</a>
       <a href="#P2" class="w3-bar-item w3-button">P2: Website Crawler</a>
       <a href="#P3" class="w3-bar-item w3-button">P3: Word2Vec</a>
+      <a href="#P4" class="w3-bar-item w3-button">P4: Sentiment Analysis</a>
 
     </div>
   <div id="contact" class="w3-margin-top">
@@ -86,7 +87,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- Image header -->
   <div id="title" class="w3-display-container w3-container">
-    <img src="top.png" alt="Jeans" class="graypic" style="width:100%">
+    <img src="top.png" alt="Jeans" class="graypic" style="width:100%;height:80%;">
     <div class="w3-display-topleft" style="padding:24px 48px">
       <h1 class="w3-jumbo w3-hide-small">NLP LAB</h1>
       <h1 class="w3-hide-large w3-hide-medium">NLP LAB</h1>
@@ -105,19 +106,21 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
       <div class="w3-container text_content w3-margin">
 
-        <b class="w3-text-grey">Intro Project</b>
-        <p>專案主旨為台灣繁體中文建置自然語言理解之服務，以下介紹大致內容</p>
-        <p>Implemented Topic :</p>
-        <li>為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙 - jieba for tradition Chiness</li>
-        <li>透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler</li>
-        <li>修改word2vec以適用中文訓練 - word2vec</li>
-        <li>情感分析之實作 - sentiment analysis</li>
+        <b class="w3-text-grey text_title">Intro Project</b>
+        <p>專案主旨為台灣繁體中文建置自然語言理解之服務，以下介紹大致內容: <br>
 
-        <p>Main Package :</p>
-        <li>TensorFlow</li>
-        <li>jieba</li>
-        <li>jieba.analysis</li>
-        <li>requests</li>
+            <b>Implemented Topic :<br></b>
+            1. 為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙 - jieba for tradition Chiness<br>
+            2. 透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler<br>
+            3. 修改word2vec以適用中文訓練 - word2vec<br>
+            4. 情感分析之實作 - sentiment analysis<br>
+
+            <b>Main Package :<br></b>
+            > TensorFlow<br>
+            > jieba<br>
+            > jieba.analysis<br>
+            > requests<br>
+        </p>
       </div>
 
     </div>
@@ -140,68 +143,56 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
   <!-- Part 1 section -->
   <div id="P1" class="w3-row  w3-padding-16">
-    <div class="w3-col l6 s12" >
+    <div class="w3-col l12 s12" >
 
-      <div class="w3-container text_content w3-margin">
+      <div class="w3-container w3-margin">
 
-        <b class="w3-text-grey">為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙 - jieba for tradition Chiness</b>
-        <p>這個主題旨在是在匯入台灣當地字詞，並調用jieba.lcut(sentence)、jieba.analyse.tfidf()和jieba.analyse.textrank()</p>
-        <pre class="text_content">
-          0. 調用服務實例
-            > NLPLab/jiebaService.py
+          <b class="w3-text-grey text_title">為jieba匯入台灣繁體區之字詞典並添加台灣區常見口語詞彙</b>
+          <div class="text_content">
+            這個主題旨在是在匯入台灣當地字詞，並調用jieba.lcut(sentence)、jieba.analyse.tfidf()和jieba.analyse.textrank()<br>
 
-          以下紀錄重點工作；
+            0. 調用服務實例<br>
+              <pre>
+                > NLPLab/jiebaService.py
+              </pre>
+            以下紀錄重點工作；<br>
 
-          1. 調整預設自設字典 並 匯入台灣字詞
-            > 在 NLPLab/jieba_zn/jieba/__init__.py 調整 "DEFAULT_DICT_NAME" 變數
-            > 在 NLPLab/jieba_zn/jieba/__init__.py 調用 "dt.load_userdict(get_module_res('tw.dict.all'))" 方法
+            1. 調整預設自設字典 並 匯入台灣字詞<br>
+              <pre>
+                > 在 NLPLab/jieba_zn/jieba/__init__.py 調整 "DEFAULT_DICT_NAME" 變數
+                > 在 NLPLab/jieba_zn/jieba/__init__.py 調用 "dt.load_userdict(get_module_res('tw.dict.all'))" 方法
+              </pre>
+            2. 調整路徑: 由於最初下載時部分程式並為相對路徑，故稍作修正。<br>
 
-          2. 調整路徑
-            > 由於最初下載時部分程式並為相對路徑，故稍作修正。
-
-          3. 结巴中文分词來源: https://github.com/fxsjy/jieba
-
-
-        </pre>
+            3. 结巴中文分词來源: https://github.com/fxsjy/jieba<br>
+          </div>
       </div>
 
     </div>
 
-    <div id="P1_pic" class="w3-col l6 s12" >
-      <div class="w3-container">
-        <div class="w3-display-container padding-32">
-           <a href="./word2vec.png" data-lightbox="word2vec" data-title="word2vec">
-            <span class="w3-tag w3-grayscale">Word2Vec</span>
-            <img src="top.png" class="w3-" style="width:100%">
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Part 2 section -->
   <div id="P2" class="w3-row  w3-padding-16">
-    <div class="w3-col l6 s12" >
+    <div class="w3-col l12 s12" >
 
       <div class="w3-container text_content w3-margin">
 
-        <b class="w3-text-grey">透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler</b>
-        <p>這個主題旨在是在蒐集訓練所需要的資料來源、分類與轉成繁體。</p>
-        <pre class="text_content">
-
-          1. 於booking.com取得約34萬則正負面評價
-            >  這個部分主要使用 selenium 進行爬蟲
+        <b class="w3-text-grey text_title">透過網路爬蟲取得文字來源，包含正負面評價、報章雜誌等 - Website Crawler</b>
+        <div class="info">Github: https://github.com/Chunshan-Theta/NLPLab/tree/master/Crawler</div>
+        <p class="text_content">這個主題旨在是在蒐集訓練所需要的資料來源、分類與轉成繁體。<br>
+           1. 於booking.com取得約34萬則正負面評價: 這個部分主要使用 selenium 進行爬蟲<br>
+          <pre>
             >  先使用 NLPLab/Crawler/CrawlerToBooking/crawler_selenium-GetUrl.py 蒐集台灣各飯店的id
             >  在使用 NLPLab/Crawler/CrawlerToBooking/crawler_selenium-GetContent.py 分類整理正負面評價
-
-          2. 於scitechvista.nat.gov.tw取得2000多篇科學專刊
-          >  這個部分主要使用 selenium 進行爬蟲
+          </pre>
+           2. 於scitechvista.nat.gov.tw取得2000多篇科學專刊: 這個部分主要使用 selenium 進行爬蟲<br>
+          <pre>
           >  先使用 NLPLab/Crawler/CrawlerForScitechvista/crawler_selenium-GetUrl.py 蒐集科學文章的各個連結
           >  在使用 NLPLab/Crawler/CrawlerForScitechvista/crawler_selenium-GetContent.py 爬下內容儲存
-
-          3. 於wiki取得中文文章約70000篇 - 參考來源 (https://github.com/Alex-CHUN-YU/Word2vec)
-
-            > 主要以 pages-articles.xml.bz2 結尾之檔案類型，這邊使用 zhwiki-latest-pages-articles.xml.bz2。
+          </pre>
+           3. 於wiki取得中文文章約70000篇 - 參考來源 (https://github.com/Alex-CHUN-YU/Word2vec)<br>
+          主要以 pages-articles.xml.bz2 結尾之檔案類型，這邊使用 zhwiki-latest-pages-articles.xml.bz2。
+          <pre>
             > 維基資料集:
               https://zh.wikipedia.org/wiki/Wikipedia:%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8B%E8%BD%BD
 
@@ -211,26 +202,16 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
             > 程式參考網址:
               https://radimrehurek.com/gensim/corpora/wikicorpus.html
               https://radimrehurek.com/gensim/models/word2vec.html
-
-          4. 轉簡體為繁體
-            >  這個部分主要使用 NLPLab/nstools/ 進行轉換
+          </pre>
+           4. 轉簡體為繁體: 這個部分主要使用 NLPLab/nstools/ 進行轉換<br>
+          <pre>
             >  工具來源: https://github.com/skydark/nstools
-
-        </pre>
+          </pre>
+        </p>
       </div>
 
     </div>
 
-    <div id="P2_pic" class="w3-col l6 s12" >
-      <div class="w3-container">
-        <div class="w3-display-container padding-32">
-           <a href="./word2vec.png" data-lightbox="word2vec" data-title="word2vec">
-            <span class="w3-tag w3-grayscale">Word2Vec</span>
-            <img src="top.png" class="w3-" style="width:100%">
-          </a>
-        </div>
-      </div>
-    </div>
   </div>
   <!-- Part 3 section -->
   <div id="P3" class="w3-row w3-padding-16">
@@ -238,34 +219,43 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
 
       <div class="w3-container text_content w3-margin">
 
-      <b class="w3-text-grey">Word2vec</b>
-      <pre class="text_content">
-
-        1. loading the train data
+      <b class="w3-text-grey text_title">Word2vec</b>
+      <div class="info"> github: https://github.com/Chunshan-Theta/NLPLab/tree/master/word2vec</div>
+      <div class="text_content">
+        1. loading the train data<br>
+        the main step:<br>
+        * clear special character:only chinese<br>
+        * simplified to treditional (../nstools/)<br>
+        <pre>
           >  loading stop words ( word2vec/stop_words.txt.py )
           >  loading training article ( word2vec/wiki/ or word2vec/TextForTrain/ )
+        </pre>
 
-          the main step:
-          * clear special character:only chinese
-          * simplified to treditional (../nstools/)
+        2. Build the dictionary and replace rare words with UNKNOWWORD token.<br>
+        the main step:<br>
+        * Setting the size of the word set for the training model<br>
+        <pre>
+        >  Build the dictionary
+        >  rare words processed
+        >  using function: collections.Counter().most_common()
+        </pre>
 
-        2. Build the dictionary and replace rare words with UNKNOWWORD token.
-          >  Build the dictionary
-          >  rare words processed
+        3. Function to generate a training batch for the skip-gram model.<br>
 
-          the main step:
-          * Setting the size of the word set for the training model
-          * using function: collections.Counter().most_common()
-        3. Function to generate a training batch for the skip-gram model.
-        4. Build and train a skip-gram model.
-          > Loss: tf.nn.nce_loss()
-          > Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
-        5. Begin training
-          > training stage
-          > TensorBoard (will output to word2vec/TB/)
-          > output to Json txt file :result_Json
+        4. Build and train a skip-gram model.<br>
+        <pre>
+        > Loss: tf.nn.nce_loss()
+        > Optimizer: tf.train.AdamOptimizer(learning_rate=1.0).minimize()
+        </pre>
 
-      </pre>
+        5. Begin training<br>
+        <pre>
+        > training stage
+        > TensorBoard (will output to word2vec/TB/)
+        > output to Json txt file :result_Json
+        </pre>
+
+      </div>
 
     </div>
 
@@ -318,7 +308,80 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
     </div>
   </div>
 
+  <!-- Part 4 section -->
+  <div id="P4" class="w3-row w3-padding-16">
+    <div class="w3-col l6 s12" >
 
+      <div class="w3-container text_content w3-margin">
+
+      <b class="w3-text-grey text_title">情緒分析</b>
+      <div class="text_content">
+      <div class="info"> github: https://github.com/Chunshan-Theta/NLPLab/tree/master/sentiment/py3/zn</div>
+      <br>
+      使用word2vec為向量基礎，透過旅館業正負面評論資料34萬筆來訓練評論正反面情緒預測。<br><br>
+
+      </b>訓練內容:<br></b>
+      1.讀取word2vec 向量 (字詞維度300)<br>
+      2.讀取正負面資訊<br>
+      3.建築lstm神經網路<br>
+      4.輸出model<br><br>
+
+      <b>reference: </b>
+      <pre>
+      > https://github.com/adeshpande3/LSTM-Sentiment-Analysis
+      </pre>
+     </div>
+
+    </div>
+
+    </div>
+
+    <div class="w3-col l6 s12" >
+      <div class="w3-container">
+        <div class="w3-display-container padding-32">
+
+
+          <a href="./sentiment_graph.png" data-lightbox="word2vecgraph" data-title="sentiment Graph">
+            <span class="w3-tag">Graph</span>
+            <img src="sentiment_graph.png" class="" style="width:100%">
+          </a>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <div id="P4_picset" class="w3-row w3-padding-16">
+
+    <div class="w3-col l6 s12" >
+      <div class="w3-container">
+        <div class="w3-display-container padding-32">
+
+
+          <a href="./sentiment_loss.png" data-lightbox="word2vecloss1" data-title="sentiment loss 1">
+            <span class="w3-tag">Loss</span>
+            <img src="sentiment_loss.png" class="" style="width:100%">
+          </a>
+
+        </div>
+      </div>
+
+    </div>
+    <div class="w3-col l6 s12" >
+      <div class="w3-container">
+        <div class="w3-display-container padding-32">
+
+          <a href="./sentiment_accuracy.png" data-lightbox="word2vecloss2" data-title="sentiment accuracy 2">
+            <span class="w3-tag">accuracy</span>
+            <img src="sentiment_accuracy.png" class="" style="width:100%">
+          </a>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
   <!-- Subscribe section -->
   <div id="aboutMe" class="w3-container w3-light-grey w3-padding-32">
 
@@ -326,7 +389,7 @@ body,h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
     <div class="w3-row ">
       <div class="w3-col l6 s12" >
 
-        <div class="w3-container text_content">
+        <div class="w3-container">
 
           <b class="text_title">王君善 Gavin Wang </b>
 

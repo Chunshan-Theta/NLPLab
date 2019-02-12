@@ -7,6 +7,26 @@
 a{
 	text-decoration: none;
 }
+b{
+	 margin-right: 35px;
+  line-height: 1.5;
+}
+pre{
+	color: #999!important;
+	font-family: "Montserrat", sans-serif;
+	font-size: 15px;
+	overflow: auto;
+	white-space:pre-line;
+	margin:1px;
+	margin-left: 35px;
+}
+
+.info{
+	background-color: lightyellow;
+	margin: 15px;
+	white-space:pre-line;
+	padding: 15px;
+}
 
 .padding-32 {
     padding: 32px!important;
@@ -18,15 +38,14 @@ a{
 	color: #000!important;
 	font-family: "Montserrat", sans-serif;
 	font-size: 15px;
-    line-height: 1.5;
-    margin:5px;
-    overflow: auto;
+  margin:1px;
 }
 .text_title{
-	color: #000!important;
+	color: #FFF!important;
+	background-color: #000;
 	font-family: "Montserrat", sans-serif;
 	font-size: 25px;
-    line-height: 1.5;
+  line-height: 1.5;
 }
 .graypic{
 	filter: grayscale(100%) opacity(30%);
