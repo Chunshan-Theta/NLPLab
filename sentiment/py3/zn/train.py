@@ -24,7 +24,7 @@ from jieba import posseg as pseg
 import jieba.analyse
 
 from io import open
-
+import random
 
 
 #Step 1.1: load word embeddings data
@@ -106,7 +106,7 @@ def SentencesCuter(source):
     #print("".join(re_lcut))
     return re_lcut
 
-'''
+
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
@@ -118,6 +118,7 @@ negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if 
 numWords = []
 
 for pf in positiveFiles:
+    
     with open(pf, "r", encoding='utf-8') as f:
         logging.info(str(pf))
         linearray = f.readlines()
@@ -127,8 +128,8 @@ for pf in positiveFiles:
         numWords.append(counter)
 logging.info('Positive files finished')
 
-
 for nf in negativeFiles:
+    
     with open(nf, "r", encoding='utf-8') as f:
         logging.info(str(nf))
         linearray = f.readlines()
@@ -138,9 +139,9 @@ for nf in negativeFiles:
 logging.info('Negative files finished')
 
 numFiles = len(numWords)
-logging.info('The total number of files is '+str(numFiles))
-logging.info('The total number of words in the files is '+str(sum(numWords)))
-logging.info('The average number of words in the files is '+str(sum(numWords)/len(numWords)))
+print('The total number of files is ',numFiles)
+print('The total number of words in the files is ',sum(numWords))
+print('The average number of words in the files is ',sum(numWords)/len(numWords))
 maxSeqLength = 35
 
 
@@ -151,10 +152,12 @@ ids = np.zeros((numFiles, maxSeqLength), dtype='float32')
 fileCounter = 0
 len_positiveFiles =len(positiveFiles)
 len_negativeFiles =len(negativeFiles)
-
+num_of_file = len_negativeFiles+len_positiveFiles
 logging.info("positiveFiles length: "+str(len(positiveFiles)))
 logging.info("negativeFiles length: "+str(len(negativeFiles)))
 for pf in positiveFiles:
+   if fileCounter>50:
+       break
    logging.debug(pf)
    with open(pf, "r") as f:
        indexCounter = 0
@@ -164,17 +167,14 @@ for pf in positiveFiles:
        logging.debug(line)
        split = SentencesCuter(line)
        logging.debug(split)
-       if len(split)<4:#ignoring the file if length don't fit to training
-           continue
        
        for word in split:
            
-               
+           
            try:
-               
+               #print(word,wordsList.index(word))
                ids[fileCounter][indexCounter] = wordsList.index(word)
                
-      
            except ValueError:
                logging.debug("ignored: ",word)
                #ids[fileCounter][indexCounter] = 0
@@ -182,38 +182,47 @@ for pf in positiveFiles:
            indexCounter = indexCounter + 1
            if indexCounter >= maxSeqLength :#ignoring continue string if length don't fit to training.
                break
-       print(fileCounter,'/',len_positiveFiles)
-       fileCounter = fileCounter + 1
 
+             
+       print(fileCounter,'/',num_of_file)
+       fileCounter = fileCounter + 1
+       
 for nf in negativeFiles:
    logging.debug(nf)
    with open(nf, "r") as f:
        indexCounter = 0
        linearray = f.readlines()
        line= "".join(linearray)
+       
+
+       logging.debug(line)
        split = SentencesCuter(line)
        logging.debug(split)
-       if len(split)<4:#ignoring the file if length don't fit to training
-           continue
        
+
        for word in split:
+           
+           
            try:
-               
+               #print(word,wordsList.index(word))
                ids[fileCounter][indexCounter] = wordsList.index(word)
-      
+               
            except ValueError:
                logging.debug("ignored: ",word)
                #ids[fileCounter][indexCounter] = 0
+           
            indexCounter = indexCounter + 1
-           if indexCounter >= maxSeqLength:#ignoring continue string it if length don't fit to training.
+           if indexCounter >= maxSeqLength :#ignoring continue string if length don't fit to training.
                break
-   
-       print(fileCounter,'/',(len_negativeFiles+len_positiveFiles))
+       
+            
+       print(fileCounter,'/',num_of_file)
+
        fileCounter = fileCounter + 1
+      
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
 
-'''
 
 
 
@@ -223,40 +232,62 @@ ids = np.load('idsMatrix.npy')
 
 #Step3.2: defind config for training
 
-batchSize = 100*20
-lstmUnits = 256
+batchSize = 24
+lstmUnits = 64
 numClasses = 2
-iterations = 100001
+iterations = 100000*5
 maxSeqLength = 35
 numDimensions = 300
 
 positiveFilesCount = len(listdir('positiveReviews/'))#5251
 negativeFilesCount = len(listdir('negativeReviews/'))#4764
-testingFilesCount = int((positiveFilesCount+negativeFilesCount)*0.1)#1000
+testingFilesCount = int((positiveFilesCount+negativeFilesCount)*0.3)#1000
+
 
 def getTrainBatch():
     testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
-        if (i % 2 == 0):#positive
-            num = randint(1,int(positiveFilesCount-testRange))
-            labels.append([1,0])
-        else:#negative
-            num = randint(int(positiveFilesCount+testRange),int(positiveFilesCount+negativeFilesCount-1))
+        if (i % 2 == 0):
+            #pick the sample from the positive snetence set
+            RandomStart = 1
+            RandomStop = int(positiveFilesCount-testRange)
+            
+
+            num = randint(RandomStart,RandomStop) 
+            #if the sample sentence is meanless, re-random it. 
+            while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+                
+            labels.append([1,0])            
+            print("p",ids[num-1:num])
+        else:
+            #pick the sample from the negative sentence set
+            RandomStart = int(positiveFilesCount+testRange)
+            RandomStop = int(positiveFilesCount+negativeFilesCount-1)
+            
+            num = randint(RandomStart,RandomStop)
+            #if the sample sentence is meanless, re-random it.            
+            while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+                
             labels.append([0,1])
-        
+            print("n",ids[num-1:num])
         arr[i] = ids[num-1:num]
-
-
+        arr[i] = random.sample(list(arr[i]), len(arr[i]))
+    
     return arr, labels
 
 def getTestBatch():
     testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
+    RandomStart =int(positiveFilesCount-testRange)
+    RandomStop =int(positiveFilesCount+testRange)
     for i in range(batchSize):
-        num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
+        num = randint(RandomStart,RandomStop)
+        #if the sample sentence is meanless, re-random it.            
+        while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+
         if (num <= positiveFilesCount):
             labels.append([1,0])
         else:
@@ -280,14 +311,13 @@ with tf.name_scope('Embeddings'):
     data = tf.nn.embedding_lookup(wordVectors,input_data)
     learning_rate = tf.train.exponential_decay(learning_rate=0.03,
                                                global_step=step,
-                                               decay_steps=50,
-                                               decay_rate=0.9)
+                                               decay_steps=250,
+                                               decay_rate=0.999)
 
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
     lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    #lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=1.0, output_keep_prob=0.75)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.25)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=0.55, output_keep_prob=0.75)
     data = tf.cast(data,tf.float32)
     #value
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
@@ -296,27 +326,31 @@ with tf.name_scope('rnn'):
 with tf.name_scope('hidden'):
     with tf.variable_scope('weight'):
         weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
-        #weight = tf.Variable(tf.random_normal([lstmUnits, numClasses]),name="weight")
         tf.summary.histogram('weight', weight)
         
 
     with tf.variable_scope('bias'):
-        #bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
-        bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
+        bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
+        #bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
         tf.summary.histogram('bias', bias)
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
     
-    prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    logits = tf.matmul(rnn_last_output, weight)+bias
+    
+    prediction = logits
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
+
+with tf.name_scope('accuracy'):
+    correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
+    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
 
 with tf.name_scope('loss'):
     #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
-    pass
+    
 
 with tf.name_scope('optimizer'):
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -324,15 +358,14 @@ with tf.name_scope('optimizer'):
     #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
     #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
     #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
-    pass
+    
 
-with tf.name_scope('accuracy'):
-    correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
-    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
 
 sess = tf.Session()
 
 #Step3.3: defind config for Tensorboard
+tf.summary.scalar('learning_rate', learning_rate)
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
@@ -348,26 +381,28 @@ sess.run(tf.global_variables_initializer())
 
 print("training process start")
 #Step4.1: training
-for i in range(iterations):
+for i in range((iterations+1)):
       
     #Next Batch of reviews
     nextBatch, nextBatchLabels = getTrainBatch()
     logging.debug(nextBatch)
-    summary,stepLoss,_ = sess.run([merged,loss,optimizer], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
-    #Write summary to Tensorboard
-    writer.add_summary(summary, i)
-    print(str(i),stepLoss,' (loss)')
+    summary,stepAccuracy,stepLoss,_ = sess.run([merged,accuracy,loss,optimizer], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
     
-    if (i % 50 == 0):
+    if (i % 25 == 0):
+        pass#print(str(i),stepLoss,' (loss),','Accuracy: ',stepAccuracy*100,'%')
+    
+    if (i % 250 == 0):
        
        #getTestBatch
        nextBatch, nextBatchLabels = getTestBatch()
+       summary,stepAccuracy,stepLoss = sess.run([merged,accuracy,loss], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
 
-       summary,stepAccuracy = sess.run([merged,accuracy], {input_data: nextBatch, labels: nextBatchLabels}) 
-       print(str(i),"Accuracy:",stepAccuracy* 100,'%')
+       #Write summary to Tensorboard
+       writer.add_summary(summary, (i/250))
+       print(str(i),'-'*20,"Accuracy:",stepAccuracy* 100,'%',',Loss: ',float(stepLoss),'-'*20)
     
     #Save the network every 10,000 training iterations
-    if (i % 10000 == 0 and i != 0):
+    if (i % 50000 == 0 and i != 0):
        save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
        print("saved to %s" % save_path)
 
