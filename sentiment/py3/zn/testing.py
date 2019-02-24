@@ -12,6 +12,7 @@ from random import randint
 import datetime
 import json
 import sys
+import random
 '''
 import jieba
 import jieba.posseg as pseg
@@ -96,11 +97,10 @@ ids = np.load('idsMatrix.npy')
 
 
 #Step3.2: defind config for training
-
-batchSize = 100*20
-lstmUnits = 256
+batchSize = 24
+lstmUnits = 64
 numClasses = 2
-iterations = 100001
+iterations = 100000
 maxSeqLength = 35
 numDimensions = 300
 
@@ -108,29 +108,52 @@ positiveFilesCount = len(listdir('positiveReviews/'))#5251
 negativeFilesCount = len(listdir('negativeReviews/'))#4764
 testingFilesCount = int((positiveFilesCount+negativeFilesCount)*0.1)#1000
 
+
+
 def getTrainBatch():
     testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
-        if (i % 2 == 0):#positive
-            num = randint(1,int(positiveFilesCount-testRange))
-            labels.append([1,0])
-        else:#negative
-            num = randint(int(positiveFilesCount+testRange),int(positiveFilesCount+negativeFilesCount-1))
+        if (i % 2 == 0):
+            #pick the sample from the positive snetence set
+            RandomStart = 1
+            RandomStop = int(positiveFilesCount-testRange)
+            
+
+            num = randint(RandomStart,RandomStop) 
+            #if the sample sentence is meanless, re-random it. 
+            while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+                
+            labels.append([1,0])            
+            #print("p",ids[num-1:num])
+        else:
+            #pick the sample from the negative sentence set
+            RandomStart = int(positiveFilesCount+testRange)
+            RandomStop = int(positiveFilesCount+negativeFilesCount-1)
+            
+            num = randint(RandomStart,RandomStop)
+            #if the sample sentence is meanless, re-random it.            
+            while 3> np.count_nonzero(ids[num-1:num][0]):
+                num = randint(RandomStart,RandomStop)              
             labels.append([0,1])
-        logging.debug(str(num))
+            #print("n",ids[num-1:num])
         arr[i] = ids[num-1:num]
-
-
+        arr[i] = random.sample(list(arr[i]), len(arr[i]))
+    
     return arr, labels
 
-def getTestBatch(type='default'):
+def getTestBatch():
     testRange = testingFilesCount/2
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
+    RandomStart =int(positiveFilesCount-testRange)
+    RandomStop =int(positiveFilesCount+testRange)
     for i in range(batchSize):
-        num = randint(int(positiveFilesCount-testRange),int(positiveFilesCount+testRange))
+        num = randint(RandomStart,RandomStop)
+        #if the sample sentence is meanless, re-random it.            
+        while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+
         if (num <= positiveFilesCount):
             labels.append([1,0])
         else:
@@ -144,19 +167,23 @@ tf.reset_default_graph()
 
 
 
+
 with tf.name_scope('Embeddings'):
-    lr = tf.placeholder(tf.float32)
+    step = tf.placeholder(tf.int32)
     labels = tf.placeholder(tf.float32, [batchSize, numClasses])
     input_data = tf.placeholder(tf.int32, [batchSize, maxSeqLength])
     
     data = tf.Variable(tf.zeros([batchSize, maxSeqLength, numDimensions]),dtype=tf.float32)
     data = tf.nn.embedding_lookup(wordVectors,input_data)
+    learning_rate = tf.train.exponential_decay(learning_rate=0.03,
+                                               global_step=step,
+                                               decay_steps=50,
+                                               decay_rate=0.9)
 
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
     lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    #lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=1.0, output_keep_prob=0.75)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell, output_keep_prob=0.25)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=0.55, output_keep_prob=0.75)
     data = tf.cast(data,tf.float32)
     #value
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
@@ -165,37 +192,40 @@ with tf.name_scope('rnn'):
 with tf.name_scope('hidden'):
     with tf.variable_scope('weight'):
         weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
-        #weight = tf.Variable(tf.random_normal([lstmUnits, numClasses]),name="weight")
         tf.summary.histogram('weight', weight)
         
     with tf.variable_scope('bias'):
-        #bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
-        bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
+        bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
+        #bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
         tf.summary.histogram('bias', bias)
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
     
-    prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
-    #prediction = tf.add(tf.matmul(rnn_last_output, weight),bias)
-    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    logits = tf.matmul(rnn_last_output, weight)+bias
+    
+    prediction = logits
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
-
-with tf.name_scope('loss'):
-    #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
-    pass
-
-with tf.name_scope('optimizer'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)#learning_rate inital value is 0.001
-    #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
-    #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
-    #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
-    pass
+    #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
+    #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
 
 with tf.name_scope('accuracy'):
     correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
     accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+
+with tf.name_scope('loss'):
+    #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
+    
+
+with tf.name_scope('optimizer'):
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    #optimizer = tf.train.AdamOptimizer(learning_rate=0.03).minimize(loss)#learning_rate inital value is 0.001
+    #optimizer = tf.train.AdagradOptimizer(learning_rate=0.03).minimize(loss)
+    #optimizer = tf.train.MonentumOptimizer(learning_rate=0.03,monentum=0.9).minimize(loss)
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.35).minimize(loss)
+    
+
+
 
 sess = tf.Session()
 '''
@@ -244,7 +274,7 @@ writer.close()
 
 sess = tf.InteractiveSession()
 saver = tf.train.Saver()
-saver.restore(sess, tf.train.latest_checkpoint('models_saved'))
+saver.restore(sess, tf.train.latest_checkpoint('models'))
 '''
 
 '''
@@ -264,9 +294,9 @@ for i in range(iterations):
 def SentencesCuter(source):
     source = source.replace(" ", "") #remove space
     #clear special character:only chinese
-    source = re.sub("[^\u4e00-\u9fff]", "", source)
-    source_list = jieba.lcut(source, cut_all=True)
+    source_list = jieba.lcut(source, cut_all=False)
     source = "".join(source_list)
+    source = re.sub("[^\u4e00-\u9fff]", "", source)
     words = pseg.cut(source)
     re_lcut=[]
     allowedtype=["n","v","vd","vn","ns","a","d","ad","an","x"]
@@ -277,7 +307,7 @@ def SentencesCuter(source):
         else:
             pass#print(word,flag)
 
-    print("".join(re_lcut))
+    #print("".join(re_lcut))
     return re_lcut
 
 
@@ -296,29 +326,28 @@ def testingSpeech(source):
         except:
             pass#Sentence[idx] =0
         idx+=1
-        if idx>=maxSeqLength:
-            break
+
+        #break if sentence too long
+        if idx>=maxSeqLength:break    
 
     input_data_Sentence = np.zeros((batchSize,maxSeqLength))
     input_data_Sentence[0] = Sentence
-    prediction_answer = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
-    prediction_answer = prediction_answer[0]
-    print(''.join(validdwords))
-    print(source)
-    #print(prediction_answer)  
-    print(prediction_answer[0]-prediction_answer[1]) 
-    #print("-"*10)
-    return prediction_answer[0]-prediction_answer[1]
+    prediction_result = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
+    prediction_answer = prediction_result[0][:]
+    print(source,validdwords)
+    if 4>len(validdwords): return [-1,'meanless']
+    print(prediction_answer)
+    #respond boolean base on prediction result.
+    return [1,prediction_answer[0]] if prediction_answer[0]>prediction_answer[1] else [0,prediction_answer[1]]
+
+
+#testingSpeech("妳的論述並不合理")
+#for s in ["我同意你的看法","我認為你的推論很不正確除非我有看到更多的證據來判斷","我不同意你的看法","漏洞","妳的論述並不合理"]:
+#    print(testingSpeech(s)[0],s)
+
+
 
 '''
-testingSpeech("漏洞")
-testingSpeech("妳的論述並不合理")
-testingSpeech("我不同意你的看法")
-testingSpeech("我認為你的推論很不正確除非我有看到更多的證據來判斷")
-testingSpeech("我同意你的看法")
-'''
-
-
 p1=["我同意",
   "你說的沒錯",
   "很好"]
@@ -349,41 +378,21 @@ n3 = [
   "你說的聽起來很有道理但我們應該要拿出證據說話",
   "我能夠體會妳的想法但我認為其中有些問題"]
 
-sum_v=0.0
-lossrate=0
-count=0
-for i in p1:
-    v = testingSpeech(i)
-    sum_v += v
-    count+=1
-    if 1 > v:
-        lossrate+=1
+x = [
+  "我認為你的推論很不正確除非我有看到更多的證據來判斷",
+  "我沒辦法相信妳的推論除非妳有更多的證據可以證明",
+  "你說的是錯誤的的確證據並沒有顯示出這樣的情況",
+  "你說的聽起來很有道理但我們應該要拿出證據說話",
+  "我能夠體會妳的想法但我認為其中有些問題"]
 
-for i in p2:
-    v = testingSpeech(i)
-    sum_v += v
-    count+=1
-    if 1 > v:
-        lossrate+=1
-print("p",str(sum_v/count),str(lossrate/count))
+for s in p1+p2+p3:
+    (testingSpeech(s)[0],s)
 
+print("-"*20)
+for s in n1+n2+n3:
+    (testingSpeech(s)[0],s)
 
-sum_v=0.0
-rate=0
-count=0
-for i in n1:
-    v = testingSpeech(i)
-    sum_v += v
-    count+=1
-    if v > 1.5:
-        lossrate+=1
-
-for i in n2:
-    v = testingSpeech(i)
-    sum_v += v
-    count+=1
-    if v> 1.5:
-        lossrate+=1
-print("n",str(sum_v/count),str(lossrate/count))
-
-
+print("-"*20)
+for s in x:
+    (testingSpeech(s)[0],s)
+'''
