@@ -291,11 +291,11 @@ def getTestBatch():
     
 
 
+
+
+
+
 tf.reset_default_graph()
-
-
-
-
 with tf.name_scope('Embeddings'):
     step = tf.placeholder(tf.int32)
     labels = tf.placeholder(tf.float32, [batchSize, numClasses])
@@ -318,29 +318,28 @@ with tf.name_scope('rnn'):
     #tf.summary.histogram('rnn_out', rnn_out)
 
 with tf.name_scope('hidden'):
-    with tf.variable_scope('weight'):
-        weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
-        tf.summary.histogram('weight', weight)
-        
+    
+    weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
+    tf.summary.histogram('weight', weight)
 
-    with tf.variable_scope('bias'):
-        bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
-        #bias = tf.Variable(tf.random_normal([numClasses]),name="bias")
-        tf.summary.histogram('bias', bias)
+    bias = tf.Variable(tf.constant(0.1, shape=[numClasses]),name="bias")
+    tf.summary.histogram('bias', bias)
+
     value = tf.transpose(rnn_out, [1, 0, 2])
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
     
-    logits = tf.matmul(rnn_last_output, weight)+bias
+    prediction = tf.math.add(tf.matmul(rnn_last_output, weight),bias,name="pred")
     
-    prediction = logits
+    
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.softmax(tf.add(tf.matmul(rnn_last_output, weight),bias))
 
 with tf.name_scope('accuracy'):
-    correctPred = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
-    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
-
+    PredResult = tf.argmax(prediction, 1)
+    correctPred = tf.equal(PredResult, tf.argmax(labels,1))
+    accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32),name="accuracy")
+    
 with tf.name_scope('loss'):
     #loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
@@ -355,6 +354,11 @@ with tf.name_scope('optimizer'):
     
 
 
+tf.add_to_collection('input_data' , input_data)
+tf.add_to_collection('labels', labels)
+tf.add_to_collection('prediction', prediction)
+tf.add_to_collection('PredResult', PredResult)
+tf.add_to_collection('accuracy', accuracy)
 
 sess = tf.Session()
 
@@ -369,9 +373,12 @@ writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
 #Step4.0: inital config of training
-sess = tf.InteractiveSession()
+
+#init
 saver = tf.train.Saver()
+sess = tf.InteractiveSession()
 sess.run(tf.global_variables_initializer())
+
 
 print("training process start")
 #Step4.1: training
@@ -382,26 +389,24 @@ for i in range((iterations+1)):
     logging.debug(nextBatch)
     summary,stepAccuracy,stepLoss,_ = sess.run([merged,accuracy,loss,optimizer], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
     
-    
-    print(str(i),stepLoss,' (loss),','Accuracy: ',stepAccuracy*100,'%')
+    #Write summary to Tensorboard
+    writer.add_summary(summary, i)
     
     if (i % 10 == 0):
        
        #getTestBatch
        nextBatch, nextBatchLabels = getTestBatch()
-       summary,stepAccuracy,stepLoss = sess.run([merged,accuracy,loss], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
+       StepAccuracy=(sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100
+       print("Accuracy for this batch:",StepAccuracy )
 
-       #Write summary to Tensorboard
-       writer.add_summary(summary, i)
-       print(str(i),'-'*20,"Accuracy:",stepAccuracy* 100,'%',',Loss: ',float(stepLoss),'-'*20)
+       
     
     #Save the network every 10,000 training iterations
-    if (i % 10000 == 0 and i != 0):
+    if (i % 10000 == 0):
        save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
        print("saved to %s" % save_path)
 
 writer.close()
-
 
 
 
