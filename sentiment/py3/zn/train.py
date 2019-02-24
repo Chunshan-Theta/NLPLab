@@ -101,12 +101,11 @@ def SentencesCuter(source):
         if flag in allowedtype:
             re_lcut.append(word)
         else:
-            pass#print(word,flag)
+            pass
 
-    #print("".join(re_lcut))
+    
     return re_lcut
-
-
+'''
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
@@ -156,8 +155,6 @@ num_of_file = len_negativeFiles+len_positiveFiles
 logging.info("positiveFiles length: "+str(len(positiveFiles)))
 logging.info("negativeFiles length: "+str(len(negativeFiles)))
 for pf in positiveFiles:
-   if fileCounter>50:
-       break
    logging.debug(pf)
    with open(pf, "r") as f:
        indexCounter = 0
@@ -172,7 +169,7 @@ for pf in positiveFiles:
            
            
            try:
-               #print(word,wordsList.index(word))
+               
                ids[fileCounter][indexCounter] = wordsList.index(word)
                
            except ValueError:
@@ -204,7 +201,7 @@ for nf in negativeFiles:
            
            
            try:
-               #print(word,wordsList.index(word))
+               
                ids[fileCounter][indexCounter] = wordsList.index(word)
                
            except ValueError:
@@ -224,7 +221,7 @@ np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
 
 
-
+'''
 
 #Step3.1: loading sample
 ids = np.load('idsMatrix.npy')
@@ -235,7 +232,7 @@ ids = np.load('idsMatrix.npy')
 batchSize = 24
 lstmUnits = 64
 numClasses = 2
-iterations = 100000*5
+iterations = 100000
 maxSeqLength = 35
 numDimensions = 300
 
@@ -259,8 +256,7 @@ def getTrainBatch():
             #if the sample sentence is meanless, re-random it. 
             while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
                 
-            labels.append([1,0])            
-            print("p",ids[num-1:num])
+            labels.append([1,0])     
         else:
             #pick the sample from the negative sentence set
             RandomStart = int(positiveFilesCount+testRange)
@@ -268,10 +264,9 @@ def getTrainBatch():
             
             num = randint(RandomStart,RandomStop)
             #if the sample sentence is meanless, re-random it.            
-            while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
-                
+            while 3> np.count_nonzero(ids[num-1:num][0]):
+                num = randint(RandomStart,RandomStop)              
             labels.append([0,1])
-            print("n",ids[num-1:num])
         arr[i] = ids[num-1:num]
         arr[i] = random.sample(list(arr[i]), len(arr[i]))
     
@@ -288,10 +283,9 @@ def getTestBatch():
         #if the sample sentence is meanless, re-random it.            
         while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
 
-        if (num <= positiveFilesCount):
-            labels.append([1,0])
-        else:
-            labels.append([0,1])
+        #makeing testing Answer set.
+        labels.append([1,0]) if num <= positiveFilesCount else labels.append([0,1])   
+         
         arr[i] = ids[num-1:num]
     return arr, labels
     
@@ -311,13 +305,13 @@ with tf.name_scope('Embeddings'):
     data = tf.nn.embedding_lookup(wordVectors,input_data)
     learning_rate = tf.train.exponential_decay(learning_rate=0.03,
                                                global_step=step,
-                                               decay_steps=250,
-                                               decay_rate=0.999)
+                                               decay_steps=50,
+                                               decay_rate=0.9)
 
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
     lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=0.55, output_keep_prob=0.75)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=0.95, output_keep_prob=0.55)
     data = tf.cast(data,tf.float32)
     #value
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, data, dtype=tf.float32)
@@ -388,21 +382,21 @@ for i in range((iterations+1)):
     logging.debug(nextBatch)
     summary,stepAccuracy,stepLoss,_ = sess.run([merged,accuracy,loss,optimizer], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
     
-    if (i % 25 == 0):
-        pass#print(str(i),stepLoss,' (loss),','Accuracy: ',stepAccuracy*100,'%')
     
-    if (i % 250 == 0):
+    print(str(i),stepLoss,' (loss),','Accuracy: ',stepAccuracy*100,'%')
+    
+    if (i % 10 == 0):
        
        #getTestBatch
        nextBatch, nextBatchLabels = getTestBatch()
        summary,stepAccuracy,stepLoss = sess.run([merged,accuracy,loss], {step:i,input_data: nextBatch, labels: nextBatchLabels}) 
 
        #Write summary to Tensorboard
-       writer.add_summary(summary, (i/250))
+       writer.add_summary(summary, i)
        print(str(i),'-'*20,"Accuracy:",stepAccuracy* 100,'%',',Loss: ',float(stepLoss),'-'*20)
     
     #Save the network every 10,000 training iterations
-    if (i % 50000 == 0 and i != 0):
+    if (i % 10000 == 0 and i != 0):
        save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
        print("saved to %s" % save_path)
 
