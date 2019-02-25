@@ -48,11 +48,11 @@ def getTestBatch():
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     RandomStart =int(positiveFilesCount-testRange)
-    RandomStop =int(positiveFilesCount+testRange)
+    RandomStop =int(positiveFilesCount)#int(positiveFilesCount+testRange)
     for i in range(batchSize):
         num = randint(RandomStart,RandomStop)
         #if the sample sentence is meanless, re-random it.            
-        while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+        while 1> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
 
         #makeing testing Answer set.
         labels.append([1,0]) if num <= positiveFilesCount else labels.append([0,1])   
@@ -74,7 +74,7 @@ def getTrainBatch():
 
             num = randint(RandomStart,RandomStop) 
             #if the sample sentence is meanless, re-random it. 
-            while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+            while 1> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
                 
             labels.append([1,0])     
         else:
@@ -84,7 +84,7 @@ def getTrainBatch():
             
             num = randint(RandomStart,RandomStop)
             #if the sample sentence is meanless, re-random it.            
-            while 3> np.count_nonzero(ids[num-1:num][0]):
+            while 1> np.count_nonzero(ids[num-1:num][0]):
                 num = randint(RandomStart,RandomStop)              
             labels.append([0,1])
         arr[i] = ids[num-1:num]
@@ -107,9 +107,9 @@ tf.reset_default_graph()
 
 sess = tf.Session()
 # import the graph from the file
-saver = tf.train.import_meta_graph('models/pretrained_lstm.ckpt-0.meta')
+saver = tf.train.import_meta_graph('models_saved/pretrained_lstm.ckpt-100000.meta')
 # restore the saved vairable
-saver.restore(sess, tf.train.latest_checkpoint('models'))
+saver.restore(sess, tf.train.latest_checkpoint('models_saved'))
 graph = tf.get_default_graph()
 
 
@@ -117,16 +117,18 @@ accuracy = tf.get_collection("accuracy")[0]
 input_data = tf.get_collection("input_data")[0]
 labels = tf.get_collection("labels")[0]
 prediction = tf.get_collection("prediction")[0]
+PredResult = tf.get_collection("PredResult")[0]
+ModelAccuracy = 0
+for i in range(10):
+    # print the loaded variable
+    nextBatch, nextBatchLabels = getTestBatch()
+    StepAccuracy = sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})
+    ModelAccuracy+=(StepAccuracy*100)
+print('Models Accuracy: ',ModelAccuracy/10 ,'%')
+#StepPredResult = sess.run([PredResult], {input_data: nextBatch})
+#print(StepPredResult,nextBatchLabels)
 
 
-# print the loaded variable
-nextBatch, nextBatchLabels = getTestBatch()
-#StepAccuracy,Ans = sess.run([accuracy,labels], {input_data: nextBatch, labels: nextBatchLabels})
-#print('Accuracy', StepAccuracy)
-StepPrediction = sess.run([prediction], {input_data: nextBatch})
-print(StepPrediction)
-
-'''
 def SentencesCuter(source):
     source = source.replace(" ", "") #remove space
     #clear special character:only chinese
@@ -148,32 +150,38 @@ def SentencesCuter(source):
 
 #Step5.2: testing the model by string
 def testingSpeech(source):
-    
+
+
     source_list = SentencesCuter(source)
     Sentence = np.zeros((maxSeqLength), dtype='int32')
     idx = 0
-    validdwords=[]
     for i in source_list:
         try:
             Sentence[idx] = wordsList.index(i)
-            validdwords.append(i)
+            
         except:
             pass#Sentence[idx] =0
         idx+=1
 
         #break the process if the sentence too long
         if idx>=maxSeqLength:break    
+    print(source_list)
 
-    input_data_Sentence = np.zeros((batchSize,maxSeqLength))
+
+    input_data_Sentence,input_data_Ans = getTestBatch()
     input_data_Sentence[0] = Sentence
+
     
-    prediction_result = sess.run(prediction,feed_dict={input_data: input_data_Sentence})
-    prediction_answer = prediction_result[0][:]
-    print(source,validdwords)
-    if 4>len(validdwords): return [-1,'meanless']
-    print(prediction_answer)
-    #respond boolean base on prediction result.
-    return [1,prediction_answer[0]] if prediction_answer[0]>prediction_answer[1] else [0,prediction_answer[1]]
+    p_result,p_value = sess.run([PredResult,prediction], {input_data: input_data_Sentence})
+    
+    
+    prediction_rate = p_value[0][:]    
+    prediction_answer = p_result[0]
+    
+
+    diff = prediction_rate[0]-prediction_rate[1] if prediction_rate[0]>prediction_rate[1] else prediction_rate[1]-prediction_rate[0]
+    print(prediction_answer,diff)
+    return prediction_answer
 
 
 
@@ -190,8 +198,7 @@ p3=[
   "我認為你的推論很正確有很多證據可以證明你的論點",
   "我相信妳的推論聽起來很有道理",
   "你說的是正確的的確證據是顯示出這樣的情況",
-  "妳的說法還有一些漏洞但我大致上認同你的論述",
-  "妳說的怪怪的但大致上你的論述還算合理"]
+  "妳的說法還有一些漏洞但我大致上認同你的論述"]
 
 n1 = ["我不同意",
   "你說的並不正確",
@@ -208,19 +215,27 @@ n3 = [
   "你說的聽起來很有道理但我們應該要拿出證據說話",
   "我能夠體會妳的想法但我認為其中有些問題"]
 
-x = [
-  "我認為你的推論很不正確除非我有看到更多的證據來判斷",
-  "我沒辦法相信妳的推論除非妳有更多的證據可以證明",
-  "你說的是錯誤的的確證據並沒有顯示出這樣的情況",
-  "你說的聽起來很有道理但我們應該要拿出證據說話",
-  "我能夠體會妳的想法但我認為其中有些問題"]
+n4 = [
+  "唯一缺點就是燈很暗，最亮的竟然只有廁所燈...（白天不會）上去閣樓樓梯有點陡要小心，還有點小小殘忍的就是所有房型都禁止飲食，不過相信大家都會在台南的大街小巷吃得很滿足～",
+  "轉程電梯 外加沒有無障礙設施 如果有兩間廁所 及浴室可以大間一點會更好 ",
+  "  很糟糕的經驗，骯髒得很...而且地理位置也不好....",
+  "  員工不太親切 臉很臭 床太軟 隔音差  在臉書上承諾我們的房間 到現場辦理入住卻給我們先看另一個房間，因那間真的不好，又問我們要不要加價換樓上房間，我就拿臉書給他看他當初承諾要給我的房間，為何不一開始就直接先給該給我們的房間呢，感覺不誠實!",
+  "廁所比較小，但房間夠大，不計較了。"]
+p4 = [
+  "  溜滑梯房設計很好   孩子很喜歡 民宿老闆  老闆娘很友善👍",
+  "夜景很美、地點佳交通方便、價格實在、浴室很乾淨",
+  "  喜歡他在商圈附近，地標明顯。",
+  "房間大，採光不錯",
+  "空間寬敞 風景不錯"]
 
-for s in p1+p2+p3:
-    print(testingSpeech(s)[0],s)
+correctCount=0
+for i in p1+p2+p3:
+    ans =testingSpeech(i)
+    if ans ==0 :correctCount+=1
+print(correctCount/12*100)
+correctCount=0
+for i in n1+n2+n3:
+    ans =testingSpeech(i)
+    if ans ==1 :correctCount+=1
+print(correctCount/12*100)
 
-print("-"*20)
-for s in n1+n2+n3:
-    print(testingSpeech(s)[0],s)
-
-print("-"*20)
-'''
