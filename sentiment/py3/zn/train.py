@@ -264,7 +264,7 @@ def getTrainBatch():
             
             num = randint(RandomStart,RandomStop)
             #if the sample sentence is meanless, re-random it.            
-            while 3> np.count_nonzero(ids[num-1:num][0]):
+            while 1> np.count_nonzero(ids[num-1:num][0]):
                 num = randint(RandomStart,RandomStop)              
             labels.append([0,1])
         arr[i] = ids[num-1:num]
@@ -281,7 +281,7 @@ def getTestBatch():
     for i in range(batchSize):
         num = randint(RandomStart,RandomStop)
         #if the sample sentence is meanless, re-random it.            
-        while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
+        while 1> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
 
         #makeing testing Answer set.
         labels.append([1,0]) if num <= positiveFilesCount else labels.append([0,1])   
@@ -383,7 +383,8 @@ sess.run(tf.global_variables_initializer())
 print("training process start")
 #Step4.1: training
 for i in range((iterations+1)):
-      
+    
+
     #Next Batch of reviews
     nextBatch, nextBatchLabels = getTrainBatch()
     logging.debug(nextBatch)
