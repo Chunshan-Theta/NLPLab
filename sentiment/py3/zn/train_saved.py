@@ -433,10 +433,9 @@ with tf.name_scope('Embeddings'):
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
     lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,output_keep_prob=0.5)
+    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,input_keep_prob=0.95, output_keep_prob=0.55)
     
     #value
-    lstmCell = tf.contrib.rnn.MultiRNNCell([lstmCell,lstmCell])
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, embedding, dtype=tf.float32)
     #tf.summary.histogram('rnn_out', rnn_out)
 
