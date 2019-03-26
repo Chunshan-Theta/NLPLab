@@ -43,7 +43,14 @@ assert type(wordVectors.shape) is tuple
 
 Json_file = open("./znWord2Vec300.txt","r")
 Json_file = json.load(Json_file)
-wordsList = [word for word in Json_file]
+if not isfile('idxWord.npy'):
+    print("setting idxWord")
+    wordsList = [word for word in Json_file]
+    np.save('idxWord', wordsList) 
+else:
+    print("loading idxWord")
+    wordsList = list(np.load('idxWord.npy'))
+
 print(wordsList[0])
 wordVectors=[]
 for w in wordsList:
@@ -52,6 +59,8 @@ wordVectors = np.asarray(wordVectors)
 
 finWord = int(len(wordsList))
 assert type(wordVectors.shape) is tuple
+
+
 
 '''
 #using:
@@ -105,13 +114,13 @@ def SentencesCuter(source):
 
     
     return re_lcut
-'''
+
 #step2 is for preprocessing of training and testing data in the data folder called 'positiveReviews' and 'negativeReviews'
 
 #Step 2.1: build embeddings structure of the sentence.
 #Could skip this step if the result was got.
 
-
+'''
 positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
 negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
 numWords = []
@@ -219,9 +228,10 @@ for nf in negativeFiles:
       
 np.save('idsMatrix', ids)
 logging.info("np.save('idsMatrix', ids)")
-
-
 '''
+
+
+
 
 #Step3.1: loading sample
 ids = np.load('idsMatrix.npy')
@@ -235,7 +245,6 @@ numClasses = 2
 iterations = 100000
 maxSeqLength = 35
 numDimensions = 300
-
 positiveFilesCount = len(listdir('positiveReviews/'))#5251
 negativeFilesCount = len(listdir('negativeReviews/'))#4764
 testingFilesCount = int((positiveFilesCount+negativeFilesCount)*0.3)#1000
@@ -267,92 +276,20 @@ def getTrainBatch():
             while 3> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)              
             labels.append([0,1])
         arr[i] = ids[num-1:num]
-        arr[i] = random.sample(list(arr[i]), len(arr[i]))
-    '''
-    input_data_Sentence=[]
-    positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
-    negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
-    labels=[]
+        #arr[i] = random.sample(list(arr[i]), len(arr[i]))
     
-    while len(input_data_Sentence)!=12:
-        num = randint(0,int(positiveFilesCount-halfTestRange)-1)
-        with open(positiveFiles[num], "r", encoding='utf-8') as f:
-            vaildword=0
-            linearray = f.readlines()
-            source= "".join(linearray)
-            source_list = SentencesCuter(source)
-            Sentence= np.zeros((maxSeqLength), dtype='int32')
-            
-            idx = 0
-            for i in source_list:
-                try:
-                    Sentence[idx] = wordsList.index(i)
-                    vaildword+=1
-                except:
-                    pass#Sentence[idx] =0
-                idx+=1
-
-                #break the process if the sentence too long
-                if idx>=maxSeqLength:break    
-            #print(source_list)
-            if vaildword>3:
-                labels.append([1,0])
-                input_data_Sentence.append(Sentence)
-            
-    
-    while len(input_data_Sentence)!=24:
-        num = randint(int(halfTestRange)-1,int(negativeFilesCount)-1)
-        with open(negativeFiles[num], "r", encoding='utf-8') as f:
-            vaildword=0
-            linearray = f.readlines()
-            source= "".join(linearray)
-            source_list = SentencesCuter(source)
-            Sentence= np.zeros((maxSeqLength), dtype='int32')
-            
-            idx = 0
-            for i in source_list:
-                try:
-                    Sentence[idx] = wordsList.index(i)
-                    vaildword+=1
-                except:
-                    pass#Sentence[idx] =0
-                idx+=1
-
-                #break the process if the sentence too long
-                if idx>=maxSeqLength:break    
-            #print(source_list)
-            if vaildword>3:
-                labels.append([0,1])
-                input_data_Sentence.append(Sentence)
-            
-    arr = input_data_Sentence[:]
-    '''
 
     return arr, labels
 
 def getTestBatch():
     
-    '''
-    labels = []
-    arr = np.zeros([batchSize, maxSeqLength])
-    RandomStart =int(positiveFilesCount-halfTestRange)
-    RandomStop =int(positiveFilesCount+halfTestRange)
-    for i in range(batchSize):
-        num = randint(RandomStart,RandomStop)
-        #if the sample sentence is meanless, re-random it.            
-        while 1> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
 
-        #makeing testing Answer set.
-        labels.append([1,0]) if num <= positiveFilesCount else labels.append([0,1])   
-         
-        arr[i] = ids[num-1:num]
-    '''
     input_data_Sentence=[]
     positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
     negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
     labels=[]
     
-    while len(input_data_Sentence)!=12:
+    while len(input_data_Sentence)!=(batchSize/2):
         num = randint(int(positiveFilesCount-halfTestRange),int(positiveFilesCount)-1)
         with open(positiveFiles[num], "r", encoding='utf-8') as f:
             vaildword=0
@@ -364,7 +301,7 @@ def getTestBatch():
             idx = 0
             for i in source_list:
                 try:
-                    Sentence[idx] = wordsList.index(i)
+                    Sentence[idx] = float(wordsList.index(i))
                     vaildword+=1
                 except:
                     pass#Sentence[idx] =0
@@ -375,10 +312,10 @@ def getTestBatch():
             #print(source_list)
             if vaildword>3:
                 labels.append([1,0])
-                input_data_Sentence.append(Sentence)
+                input_data_Sentence.append(list(Sentence))
             
     
-    while len(input_data_Sentence)!=24:
+    while len(input_data_Sentence)!=batchSize:
         num = randint(0,int(halfTestRange)-1)
         with open(negativeFiles[num], "r", encoding='utf-8') as f:
             vaildword=0
@@ -390,7 +327,7 @@ def getTestBatch():
             idx = 0
             for i in source_list:
                 try:
-                    Sentence[idx] = wordsList.index(i)
+                    Sentence[idx] = float(wordsList.index(i))
                     vaildword+=1
                 except:
                     pass#Sentence[idx] =0
@@ -401,15 +338,19 @@ def getTestBatch():
             #print(source_list)
             if vaildword>3:
                 labels.append([0,1])
-                input_data_Sentence.append(Sentence)
+                input_data_Sentence.append(list(Sentence))
             
-    arr = input_data_Sentence[:]
+    arr = np.asarray(input_data_Sentence[:]).astype(float)
     
 
     return arr, labels
     
 
 
+def get_a_cell(lstm_size, keep_prob):
+    lstm = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstm_size)
+    drop = tf.contrib.rnn.DropoutWrapper(lstm, output_keep_prob=keep_prob)
+    return drop
 
 
 
@@ -432,11 +373,10 @@ with tf.name_scope('Embeddings'):
 
 with tf.name_scope('rnn'):
     #lstmCell = tf.contrib.rnn.BasicLSTMCell(lstmUnits)
-    lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
-    lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,output_keep_prob=0.5)
-    
+    #lstmCell = tf.nn.rnn_cell.LSTMCell(name='basic_lstm_cell',num_units=lstmUnits)
+    #lstmCell = tf.contrib.rnn.DropoutWrapper(cell=lstmCell,output_keep_prob=0.5)
     #value
-    lstmCell = tf.contrib.rnn.MultiRNNCell([lstmCell,lstmCell])
+    lstmCell = tf.contrib.rnn.MultiRNNCell([get_a_cell(lstmUnits, 0.5) for _ in range(1)])
     rnn_out,_ = tf.nn.dynamic_rnn(lstmCell, embedding, dtype=tf.float32)
     #tf.summary.histogram('rnn_out', rnn_out)
 
@@ -456,6 +396,7 @@ with tf.name_scope('fully_connected'):
     '''
     weight = tf.truncated_normal_initializer(stddev=0.01)
     bias = tf.zeros_initializer()
+
     prediction = tf.contrib.layers.fully_connected(rnn_out[:, -1],
                 num_outputs = 2,
                 activation_fn = tf.sigmoid,
@@ -498,7 +439,7 @@ tf.summary.scalar('learning_rate', learning_rate)
 tf.summary.scalar('Loss', loss)
 tf.summary.scalar('Accuracy', accuracy)
 merged = tf.summary.merge_all()
-logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
+logdir = "tensorboard/"+ datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
 writer = tf.summary.FileWriter(logdir, graph =sess.graph)
 
 
@@ -533,19 +474,21 @@ for i in range((iterations+1)):
     #stepAccuracyRecords.append(int(stepAccuracy* 100))
     print(i,round(stepAccuracy* 100,3),round(stepLoss,3))
     #Write summary to Tensorboard
+    
     #writer.add_summary(summary, i)
     
     
-    if (i % 10 == 0 and False):
+    if (i % 10 == 0):
         
         #getTestBatch
         nextBatch, nextBatchLabels = getTestBatch()
-        summary,StepAccuracy=sess.run([merged,accuracy], {step:i,input_data: nextBatch, labels: nextBatchLabels})
-        print(i,"Accuracy for this batch:",round(StepAccuracy * 100,3),",",sum(stepAccuracyRecords)/len(stepAccuracyRecords) )
+        summary,StepAccuracy,stepLoss=sess.run([merged,accuracy,loss], {step:i,input_data: nextBatch, labels: nextBatchLabels})
+        print(i,"Accuracy for this batch:",round(StepAccuracy * 100,1),", Loss:",stepLoss)
         
         stepAccuracyRecords=[]
 
         #Write summary to Tensorboard
+        
         writer.add_summary(summary, i)
 
 
