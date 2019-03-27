@@ -26,7 +26,6 @@ import jieba.analyse
 from io import open
 import random
 
-
 #Step 1.1: load word embeddings data
 '''
 wordsList = np.load('wordsList.npy')
@@ -43,21 +42,31 @@ assert type(wordVectors.shape) is tuple
 
 Json_file = open("./znWord2Vec300.txt","r")
 Json_file = json.load(Json_file)
-wordsList = [word for word in Json_file]
+if not isfile('idxWord.npy'):
+    print("setting idxWord")
+    wordsList = [word for word in Json_file]
+    np.save('idxWord', wordsList) 
+
+print("loading idxWord")
+wordsList = list(np.load('idxWord.npy'))
+
 print(wordsList[0])
+
+
+
+
 wordVectors=[]
-for w in wordsList:
-    wordVectors.append(Json_file[w])
-wordVectors = np.asarray(wordVectors)
+if not isfile('idxWordVectors.npy'):
+    print("setting idxWordVectors")
+    
+    
+    for w in wordsList:
+        wordVectors.append(Json_file[w])
+    wordVectors = np.asarray(wordVectors)
+    np.save('idxWordVectors', wordVectors) 
 
-finWord = int(len(wordsList))
-assert type(wordVectors.shape) is tuple
-
-'''
-#using:
-baseballIndex = wordsList.index('baseball')
-print(wordVectors[baseballIndex])
-'''
+print("loading idxWordVectors")
+wordVectors = np.load('idxWordVectors.npy')
 logging.debug("向量 -> "+str(wordVectors[wordsList.index("資料")]))
 
 
@@ -440,7 +449,7 @@ with tf.name_scope('rnn'):
     #tf.summary.histogram('rnn_out', rnn_out)
 
 with tf.name_scope('fully_connected'):
-    '''
+    
     weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]),name="weight")
     bias = tf.Variable(tf.constant(0.0, shape=[numClasses]),name="bias")
 
@@ -452,14 +461,7 @@ with tf.name_scope('fully_connected'):
     rnn_last_output = tf.gather(value, int(value.get_shape()[0]) - 1)
     
     prediction = tf.math.add(tf.matmul(rnn_last_output, weight),bias,name="pred")
-    '''
-    weight = tf.truncated_normal_initializer(stddev=0.01)
-    bias = tf.zeros_initializer()
-    prediction = tf.contrib.layers.fully_connected(rnn_out[:, -1],
-                num_outputs = 2,
-                activation_fn = tf.sigmoid,
-                weights_initializer = weight,
-                biases_initializer = bias)
+   
     
     #prediction = tf.nn.relu(tf.add(tf.matmul(rnn_last_output, weight),bias))
     #prediction = tf.nn.tanh(tf.add(tf.matmul(rnn_last_output, weight),bias))

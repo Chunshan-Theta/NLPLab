@@ -3,9 +3,10 @@ word2vec/output/*.gavin
 sentiment/py3/zn/tensorboard/
 sentiment/py3/zn/znWord2Vec300.txt
 sentiment/py3/zn/models/
+sentiment/py3/zn/models_saved/
 word2vec/TB/*.gavin
 word2vec/TB/now/
-sentiment/py3/zn/idsMatrix.npy
+sentiment/py3/zn/*.npy
 word2vec/zhwiki-latest-pages-articles.xml.bz2
 word2vec/wiki_text.txt
 word2vec/TextForTrain

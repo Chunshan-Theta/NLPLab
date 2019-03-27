@@ -381,15 +381,15 @@ with tf.Session(graph=graph) as sess:
 
     for step in xrange(num_steps):
         
-	    # learning rate
+	# learning rate
         if int(step) > 80000:
-	        batch_lr =0.001    
+            batch_lr =0.001    
         elif int(step) > 40000:
-	        batch_lr =0.003    
+            batch_lr =0.003    
         elif int(step) > 20000:
-	        batch_lr =0.005
+            batch_lr =0.005
         elif int(step) > 10000:
-	        batch_lr =0.01
+            batch_lr =0.01
         else:
             batch_lr =0.03
         #training stage
