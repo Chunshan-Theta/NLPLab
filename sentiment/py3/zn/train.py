@@ -1,11 +1,9 @@
 #-*- coding:utf-8 -*-
-from numpy.random import seed
-seed(840511)
-from tensorflow import set_random_seed
-set_random_seed(840511)
+
+import random
+random.seed('gavin19950511@gmail.com')
 
 import sys
-
 from os import environ
 environ['TF_CPP_MIN_LOG_LEVEL']='2' #silence waring logs
 import numpy as np
@@ -31,7 +29,7 @@ from jieba import posseg as pseg
 import jieba.analyse
 
 from io import open
-import random
+
 
 
 
@@ -269,8 +267,6 @@ print("np.save('idsMatrix', ids)")
 
 #Step3.1: loading sample
 ids = np.load('idsMatrix.npy')
-
-
 #Step3.2: defind config for training
 
 batchSize = 24
@@ -312,13 +308,11 @@ def getTrainBatch():
             labels.append([0,1])
         arr[i] = ids[num-1:num]
         arr[i] = random.sample(list(arr[i]), len(arr[i]))
-    
 
     return arr, labels
 
 def getTestBatch():
     
- 
     input_data_Sentence=[]
     positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
     negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
@@ -413,17 +407,15 @@ with tf.name_scope('rnn'):
     #tf.summary.histogram('rnn_out', rnn_out)
 
 with tf.name_scope('fully_connected'):
- 
+    
     weight = tf.truncated_normal_initializer(stddev=0.01)
     bias = tf.zeros_initializer()
     
-
     prediction = tf.contrib.layers.fully_connected(rnn_out[:, -1],
                 num_outputs = 2,
                 activation_fn = tf.sigmoid,
                 weights_initializer = weight,
-                biases_initializer = bias)
-    
+                biases_initializer = bias)   
  
 
 with tf.name_scope('accuracy'):

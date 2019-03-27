@@ -277,85 +277,11 @@ def getTrainBatch():
             labels.append([0,1])
         arr[i] = ids[num-1:num]
         arr[i] = random.sample(list(arr[i]), len(arr[i]))
-    '''
-    input_data_Sentence=[]
-    positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
-    negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
-    labels=[]
-    
-    while len(input_data_Sentence)!=12:
-        num = randint(0,int(positiveFilesCount-halfTestRange)-1)
-        with open(positiveFiles[num], "r", encoding='utf-8') as f:
-            vaildword=0
-            linearray = f.readlines()
-            source= "".join(linearray)
-            source_list = SentencesCuter(source)
-            Sentence= np.zeros((maxSeqLength), dtype='int32')
-            
-            idx = 0
-            for i in source_list:
-                try:
-                    Sentence[idx] = wordsList.index(i)
-                    vaildword+=1
-                except:
-                    pass#Sentence[idx] =0
-                idx+=1
-
-                #break the process if the sentence too long
-                if idx>=maxSeqLength:break    
-            #print(source_list)
-            if vaildword>3:
-                labels.append([1,0])
-                input_data_Sentence.append(Sentence)
-            
-    
-    while len(input_data_Sentence)!=24:
-        num = randint(int(halfTestRange)-1,int(negativeFilesCount)-1)
-        with open(negativeFiles[num], "r", encoding='utf-8') as f:
-            vaildword=0
-            linearray = f.readlines()
-            source= "".join(linearray)
-            source_list = SentencesCuter(source)
-            Sentence= np.zeros((maxSeqLength), dtype='int32')
-            
-            idx = 0
-            for i in source_list:
-                try:
-                    Sentence[idx] = wordsList.index(i)
-                    vaildword+=1
-                except:
-                    pass#Sentence[idx] =0
-                idx+=1
-
-                #break the process if the sentence too long
-                if idx>=maxSeqLength:break    
-            #print(source_list)
-            if vaildword>3:
-                labels.append([0,1])
-                input_data_Sentence.append(Sentence)
-            
-    arr = input_data_Sentence[:]
-    '''
 
     return arr, labels
 
 def getTestBatch():
     
-    '''
-    labels = []
-    arr = np.zeros([batchSize, maxSeqLength])
-    RandomStart =int(positiveFilesCount-halfTestRange)
-    RandomStop =int(positiveFilesCount+halfTestRange)
-    for i in range(batchSize):
-        num = randint(RandomStart,RandomStop)
-        #if the sample sentence is meanless, re-random it.            
-        while 1> np.count_nonzero(ids[num-1:num][0]):num = randint(RandomStart,RandomStop)
-
-        #makeing testing Answer set.
-        labels.append([1,0]) if num <= positiveFilesCount else labels.append([0,1])   
-         
-        arr[i] = ids[num-1:num]
-    '''
     input_data_Sentence=[]
     positiveFiles = ['positiveReviews/' + f for f in listdir('positiveReviews/') if isfile(join('positiveReviews/', f))]
     negativeFiles = ['negativeReviews/' + f for f in listdir('negativeReviews/') if isfile(join('negativeReviews/', f))]
