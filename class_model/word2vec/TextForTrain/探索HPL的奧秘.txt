@@ -1,0 +1,12 @@
+ HPL的全名為High-Performance Benchmark，是一種叢集電腦效能評估軟體，目前世界前500大電腦排名(TOP 500)就是使用HPL做為標準的測試平台。HPL的運算內容是求解N N滿矩陣線性方程組，其中求解的方法為LU分解法(LU factorization)，先將矩陣拆解成下三角矩陣(lower matrix)，再分別使用前向迭代消去法(forward substitution)與背向迭代消去法(backward substitution)求解，並利用二維循環式塊狀資料分布技術(two-dimensional distribution)，將資料平均分配於各叢集節點中，提升叢集運算速度的效率。
+
+在LU分解法計算上三角矩陣與下三角矩陣的過程中，採用了高效能第三級基礎線性代數程式集 Subprograms)中的矩陣相乘技術(DGEMM)，由於基礎線性代數程式集能針對不同的電腦架構實現記憶體最佳化的效能，在記憶體快取的部分能夠提升資料的重複使用率，因此能大幅度地提升HPL的運算效率。另外，矩陣相乘運算(DGEMM)約佔HPL總運算量的百分之七十，因此世界各國的超級電腦中心在做TOP 500效能測試時，都將矩陣相乘運算的效能調校擺在第一個重點。
+
+在2007年，由於通用型圖形處理器(GPGPU：General-purpose units)概念的提出，使得科學家能夠在繪圖加速卡上執行一般的浮點運算，由於繪圖加速晶片的架構比中央處理器(CPU)更適合做浮點運算，因此往往能夠透過繪圖加速卡的應用而得到跳躍式的性能提升。以HPL為例，由於矩陣相乘運算約佔HPL總運算量的百分之七十，因此若將繪圖加速卡應用於矩陣相乘的運算中，將能大幅地提升HPL的運算效能。從最新的測試結果中，我們得知繪圖加速卡計算矩陣相乘時，可得到比中央處理器(CPU)快5倍的運算效能。另外，繪圖加速卡的效能也可由TOP 500排名中得到印證，在2011年11月TOP 500的前五名中，有三台超級電腦是使用繪圖加速卡來提升電腦的效能，因此如何利用繪圖加速卡的強大威力，將成為高速計算社群刻不容緩的首要之務。
+
+參考文獻
+HPL http://www.netlib.org/benchmark/hpl/
+BLAS http://www.netlib.org/blas/index.html
+NVIDIA, http://developer.nvidia.com/category/zone/cuda-zone
+NVIDIA, http://developer.nvidia.com/cublas
+
